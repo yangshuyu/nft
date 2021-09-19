@@ -1,5 +1,7 @@
 alembic==1.6.5
 aniso8601==9.0.1
+arrow==1.1.1
+click==8.0.1
 Flask==1.1.1
 Flask-Cors==3.0.8
 Flask-Migrate==2.5.2
@@ -14,14 +16,15 @@ itsdangerous==2.0.1
 Jinja2==3.0.1
 Mako==1.1.4
 MarkupSafe==2.0.1
-marshmallow==3.12.1
+marshmallow==2.13.6
+Pillow==8.3.2
+psycopg2==2.9.1
 python-dateutil==2.8.1
 python-editor==1.0.4
 pytz==2021.1
 six==1.16.0
 SQLAlchemy==1.4.20
 typing-extensions==3.10.0.0
-webargs==5.5.2
+webargs==1.8.1
 Werkzeug==2.0.1
 zipp==3.5.0
-Pillow==8.3.2
