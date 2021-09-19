@@ -3,9 +3,9 @@ services:
 
   postgres:
     image: postgres
-    container_name: ec_postgres
+    container_name: nft_postgres
     volumes:
-      - /mnt/data/ec_pgdata:/data/postgres
+      - /mnt/data/nft_pgdata:/data/postgres
     ports:
       - "5433:5432"
     environment:
