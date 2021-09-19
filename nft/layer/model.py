@@ -52,7 +52,6 @@ class Image(BaseModel):
     def combination_layer(cls, **kwargs):
         data = kwargs.get('data', {})
         layer_path = load_config().LAYER_FILE
-        result = {}
         layers = ['background', 'body', 'cloth', 'drink', 'earring',
                   'eyewear', 'hat', 'mouth', 'nacklace', 'props']
 
@@ -64,7 +63,6 @@ class Image(BaseModel):
             ima = ''
             if d:
                 ima = random.choice(d)
-                layer_images.append(random.choice(d))
             else:
                 for _, _, file_list in os.walk('{}/{}'.format(layer_path, layer)):
                     ima = random.choice(file_list)

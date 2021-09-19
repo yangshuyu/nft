@@ -19,7 +19,7 @@ class ImagesResource(BaseResource):
         image = Image.combination_layer(**args)
         print(image)
         data = ImageSchema(many=False).dump(image).data
-        return data
+        return data, 201
 
     @use_args(ImageQuerySchema)
     def get(self, args):
