@@ -11,5 +11,6 @@ services:
     environment:
       POSTGRES_USER: nft
       POSTGRES_PASSWORD: nft
+      POSTGRES_DB: nft
       PGDATA: /data/postgres
 
