@@ -1,0 +1,15 @@
+version: '3'
+services:
+
+  postgres:
+    image: postgres
+    container_name: ec_postgres
+    volumes:
+      - /mnt/data/ec_pgdata:/data/postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: nft
+      POSTGRES_PASSWORD: nft
+      PGDATA: /data/postgres
+
