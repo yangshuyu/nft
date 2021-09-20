@@ -66,7 +66,8 @@ class Image(BaseModel):
             else:
                 for _, _, file_list in os.walk('{}/{}'.format(layer_path, layer)):
                     ima = random.choice(file_list)
-            layer_images.append('{}/{}'.format(layer, ima))
+                ima = '{}/{}'.format(layer, ima)
+            layer_images.append(ima)
             attribute = {'trait_type': layer.upper(), 'value': ima}
             attributes.append(attribute)
 
