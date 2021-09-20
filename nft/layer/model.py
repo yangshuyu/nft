@@ -112,6 +112,7 @@ class Image(BaseModel):
         per_page = kwargs.get('per_page')
         query = cls.query
 
+        query = query.order_by(cls.created_at.desc())
         total = query.count()
 
         if page and per_page:
