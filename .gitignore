@@ -111,7 +111,8 @@ api/config/testing.py
 
 logstash/logstash.conf
 
-file/images
+file
+migrations
 
 
 # DS_Store

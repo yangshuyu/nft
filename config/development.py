@@ -14,6 +14,8 @@ class DevelopmentConfig(Config):
     SERVER_SCHEME = "http"
     SERVER_DOMAIN = "10.156.10.119:5002"
 
+    FILE = os.environ.get('NFT_FILE', os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
     LAYER_FILE = os.environ.get(
         'LAYER_FILE',
         '{}/{}'.format(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), 'file/layers')

@@ -1,3 +1,7 @@
+import copy
+import datetime
+import hashlib
+import json
 import os
 import random
 import uuid
@@ -8,7 +12,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from config import load_config
 from libs.base.model import BaseModel
 from libs.error import dynamic_error
-from nft.ext import db
+from nft import ext
 
 
 class Layer():
@@ -41,12 +45,13 @@ class Layer():
         return result
 
 
-class Image(BaseModel):
-    __tablename__ = 'images'
+class Image():
 
-    name = db.Column(db.String(512), nullable=False)
-    attributes = db.Column(JSONB)
-    description = db.Column(db.String(1024))
+    def __init__(self, name, attributes, description, timestamp):
+        self.name = name
+        self.attributes = attributes
+        self.description = description
+        self.timestamp = timestamp
 
     @classmethod
     def combination_layer(cls, **kwargs):
@@ -56,7 +61,6 @@ class Image(BaseModel):
                   'eyewear', 'hat', 'mouth', 'nacklace', 'props']
 
         layer_images = []
-        attributes = []
         for layer in layers:
             d = data.get(layer, [])
 
@@ -68,55 +72,107 @@ class Image(BaseModel):
                     ima = random.choice(file_list)
                 ima = '{}/{}'.format(layer, ima)
             layer_images.append(ima)
-            attribute = {'trait_type': layer.upper(), 'value': ima}
-            attributes.append(attribute)
 
-        image = cls.draw_picture(layer_images, attributes)
+        image = cls.draw_picture(layer_images)
         return image
 
     @classmethod
-    def draw_picture(cls, layer_images, attributes):
+    def draw_picture(cls, layer_images):
         layer_path = load_config().LAYER_FILE
+        file_path = load_config().FILE
         width = 2000
         height = 2000
 
         to_image = pil_image.new('RGBA', (width, height), (0, 0, 0, 0))
 
-        image_id = str(uuid.uuid4())
-        image = cls(
-            id=image_id,
+        timestamp = int(datetime.datetime.now().timestamp())
+        image = Image(
             name='Bored Mummy Baby #1',
-            attributes=attributes,
+            attributes=[],
             description='Bored Mummy Baby Waking Up (BMBWU) Collections series under Bored Mummy Waking Up NFT. '
-                        'Take good care of your  mummy baby, and great favor will be returned.'
+                        'Take good care of your  mummy baby, and great favor will be returned.',
+            timestamp=timestamp
         )
+
+        map_json = {}
+        # 校验图片是否重复
+        m = hashlib.md5(str(layer_images).encode('utf-8')).hexdigest()
+
+        for d in ext.all_data:
+            if d['layer'].get('md5') == m:
+                dynamic_error({}, code=422, message='生成重复图片')
+        map_json['md5'] = m
 
         try:
             for i in range(len(layer_images)):
                 from_imge = pil_image.open('{}/{}'.format(layer_path, layer_images[i])).convert('RGBA')
                 to_image = pil_image.alpha_composite(to_image, from_imge)
+
+                file = layer_images[i].split('/')[1]
+                traits = Layer.decompose_layers(file, layer_path).get('traits')
+                image.attributes.append({'trait_type': traits[0][0], 'value': traits[0][1]})
+                temp_map = layer_images[i].split('/')
+                map_json[temp_map[0]] = layer_images[i]
             # to_image.show()
 
-            to_image.save('{}/../images/{}.png'.format(layer_path, image_id))
-            db.session.add(image)
-            db.session.commit()
+            to_image.save('{}/../images/{}.png'.format(layer_path, m))
+            temp_data = image.__dict__
+            with open('{}/file/json/{}.json'.format(file_path, str(m)), 'a') as content:
+                content.write(json.dumps(temp_data))
+
+            with open('{}/file/map_json/{}.json'.format(file_path, str(m)), 'a') as content:
+                content.write(json.dumps(map_json))
+                temp_data['layer'] = map_json
+
+            ext.all_data.append(temp_data)
+
         except Exception as e:
             print(e)
             dynamic_error({}, code=422, message='图片生成失败' + str(e))
-
-        return image
+        result = image.__dict__
+        result['layer'] = map_json
+        return result
 
     @classmethod
     def get_images_by_query(cls, **kwargs):
-        page = kwargs.get('page')
-        per_page = kwargs.get('per_page')
-        query = cls.query
+        page = kwargs.get('page', 1)
+        per_page = kwargs.get('per_page', 20)
+        conditions = kwargs.get('conditions')
+        result = copy.deepcopy(ext.all_data)
+        if conditions:
+            for data in ext.all_data:
+                for key, value in conditions.items():
+                    if data['layer'].get(key) not in value:
+                        result.remove(data)
+                        break
+        total = len(result)
 
-        query = query.order_by(cls.created_at.desc())
-        total = query.count()
+        return result[(page-1)*per_page: page * per_page], total
 
-        if page and per_page:
-            query = query.limit(per_page).offset((page - 1) * per_page)
+    @classmethod
+    def delete(cls, image_id):
+        file_path = load_config().FILE
+        try:
+            if os.path.exists(file_path + '/file/image/{}.png'.format(image_id)):
+                os.remove(file_path)
+                # os.unlink(file_path)
 
-        return query.all(), total
+            if os.path.exists(file_path + '/file/json/{}.json'.format(image_id)):
+                os.remove(file_path)
+                # os.unlink(file_path)
 
+            if os.path.exists(file_path + '/file/map_json/{}.json'.format(image_id)):
+                os.remove(file_path)
+                # os.unlink(file_path)
+
+            for d in ext.all_data:
+                if d['layer'].get('md5') == image_id:
+                    ext.all_data.remove(d)
+        except Exception as e:
+            print(e)
+
+    @classmethod
+    def update(cls, image_id, kwargs):
+        image = cls.combination_layer(**kwargs)
+        cls.delete(image_id)
+        return image

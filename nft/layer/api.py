@@ -13,18 +13,26 @@ class LayersResource(BaseResource):
         return data
 
 
-class ImagesResource(BaseResource):
+class CombinationImagesResource(BaseResource):
     @use_args(CombinationLayerSchema)
     def post(self, args):
-        image = Image.combination_layer(**args)
-        print(image)
-        data = ImageSchema(many=False).dump(image).data
+        data = Image.combination_layer(**args)
         return data, 201
 
-    @use_args(ImageQuerySchema)
-    def get(self, args):
-        images, total = Image.get_images_by_query(**args)
-        data = ImageSchema(many=True).dump(images).data
-        return self.paginate(
-            data, total, args.get('page', 1), args.get('per_page', 10))
 
+class ImagesResource(BaseResource):
+    @use_args(ImageQuerySchema)
+    def post(self, args):
+        data = Image.get_images_by_query(**args)
+        return data
+
+
+class ImageResource(BaseResource):
+    def delete(self, image_id):
+        Image.delete(image_id)
+        return {}, 204
+
+    @use_args(CombinationLayerSchema)
+    def update(self, image_id, args):
+        data = Image.update(image_id, **args)
+        return data

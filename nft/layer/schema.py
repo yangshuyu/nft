@@ -16,6 +16,7 @@ class CombinationLayerSchema(BaseSchema):
 class ImageQuerySchema(BaseSchema):
     page = fields.Int(missing=1)
     per_page = fields.Int(missing=20)
+    conditions = fields.Dict()
 
     class Meta:
         strict = True
