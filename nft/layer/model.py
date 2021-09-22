@@ -154,15 +154,15 @@ class Image():
         file_path = load_config().FILE
         try:
             if os.path.exists(file_path + '/file/image/{}.png'.format(image_id)):
-                os.remove(file_path)
+                os.remove(file_path + '/file/image/{}.png'.format(image_id))
                 # os.unlink(file_path)
 
             if os.path.exists(file_path + '/file/json/{}.json'.format(image_id)):
-                os.remove(file_path)
+                os.remove(file_path + '/file/json/{}.json'.format(image_id))
                 # os.unlink(file_path)
 
             if os.path.exists(file_path + '/file/map_json/{}.json'.format(image_id)):
-                os.remove(file_path)
+                os.remove(file_path + '/file/map_json/{}.json'.format(image_id))
                 # os.unlink(file_path)
 
             for d in ext.all_data:

@@ -33,6 +33,6 @@ class ImageResource(BaseResource):
         return {}, 204
 
     @use_args(CombinationLayerSchema)
-    def update(self, image_id, args):
+    def put(self, image_id, args):
         data = Image.update(image_id, **args)
         return data
