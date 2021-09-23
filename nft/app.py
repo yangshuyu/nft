@@ -41,7 +41,7 @@ def extensions_load(app):
     # db.init_app(app)
     # migrate.init_app(app, db)
     #
-    # CORS(app, resources={r"*": {"origins": "*", "expose_headers": "X-Total"}})
+    CORS(app, resources={r"*": {"origins": "*", "expose_headers": "X-Total"}})
     ext.all_data = load_all_data()
 
 
