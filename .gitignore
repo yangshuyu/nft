@@ -111,7 +111,8 @@ api/config/testing.py
 
 logstash/logstash.conf
 
-file
+.json
+.png
 migrations
 
 

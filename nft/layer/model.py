@@ -96,7 +96,7 @@ class Image():
 
         map_json = {}
         # 校验图片是否重复
-        m = hashlib.md5(str(layer_images).encode('utf-8')).hexdigest()
+        m = hashlib.md5(str(sorted(layer_images)).encode('utf-8')).hexdigest()
 
         for d in ext.all_data:
             if d['layer'].get('md5') == m:

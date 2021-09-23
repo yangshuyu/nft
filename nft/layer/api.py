@@ -23,8 +23,9 @@ class CombinationImagesResource(BaseResource):
 class ImagesResource(BaseResource):
     @use_args(ImageQuerySchema)
     def post(self, args):
-        data = Image.get_images_by_query(**args)
-        return data
+        data, total = Image.get_images_by_query(**args)
+        return self.paginate(
+            data, total, args.get('page', 1), args.get('per_page', 20))
 
 
 class ImageResource(BaseResource):
@@ -33,6 +34,6 @@ class ImageResource(BaseResource):
         return {}, 204
 
     @use_args(CombinationLayerSchema)
-    def put(self, image_id, args):
+    def put(self, args, image_id):
         data = Image.update(image_id, **args)
         return data
