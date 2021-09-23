@@ -179,7 +179,7 @@ class Image():
             print(e)
 
     @classmethod
-    def update(cls, image_id, kwargs):
+    def update(cls, image_id, **kwargs):
         image = cls.combination_layer(**kwargs)
         cls.delete(image_id)
         return image

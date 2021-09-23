@@ -21,7 +21,7 @@ def create_app(app_name="api", blueprints=None):
         blueprints = BLUEPRINTS
     blueprints_resister(app, blueprints)
     extensions_load(app)
-
+    init_dirs()
     return app
 
 
@@ -61,3 +61,23 @@ def load_all_data():
                 print(e)
 
     return data
+
+
+def init_dirs():
+    file_path = load_config().FILE
+
+    try:
+        if not os.path.exists(file_path + '/file/images/'):
+            os.mkdir(file_path + '/file/images/')
+
+        if not os.path.exists(file_path + '/file/json/'):
+            os.mkdir(file_path + '/file/json/')
+
+        if not os.path.exists(file_path + '/file/map_json/'):
+            os.mkdir(file_path + '/file/map_json/')
+
+        if not os.path.exists(file_path + '/file/psd/'):
+            os.mkdir(file_path + '/file/psd/')
+
+    except Exception as e:
+        print(e)
