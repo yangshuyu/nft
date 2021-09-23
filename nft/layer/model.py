@@ -131,6 +131,9 @@ class Image():
             dynamic_error({}, code=422, message='图片生成失败' + str(e))
         result = image.__dict__
         result['layer'] = map_json
+        result['id'] = m
+        result['url'] = '{}://{}/files/images/{}.png'.format(
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, m)
         return result
 
     @classmethod
@@ -146,7 +149,11 @@ class Image():
                         result.remove(data)
                         break
         total = len(result)
-
+        data = result[(page-1)*per_page: page * per_page]
+        for d in data:
+            d['id'] = d['layer']['md5']
+            d['url'] = '{}://{}/files/images/{}.png'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
         return result[(page-1)*per_page: page * per_page], total
 
     @classmethod
