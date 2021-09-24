@@ -45,7 +45,6 @@ class Psd():
         layer_path = load_config().LAYER_FILE
         file_path = load_config().FILE
 
-        print('{}/{}'.format(layer_path, layer))
         for _, _, file_list in os.walk('{}/{}'.format(layer_path, layer)):
             for file in file_list:
                 if file == name + '.png':
@@ -67,5 +66,5 @@ class Psd():
         except Exception as e:
             dynamic_error({}, code=422, message='创建图层失败' + str(e))
 
-        return {'url': '{}://{}/files/images/{}.png'.format(
-            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, psd_m)}
+        return {'url': '{}://{}/files/layers/{}/{}.png'.format(
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, layer, name)}
