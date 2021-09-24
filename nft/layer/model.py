@@ -82,7 +82,7 @@ class Image():
         for layer in layers:
             d = kwargs.get(layer)
             percentage = d.get('percentage', 100)
-            layer_data = d.get('layer_data', [])
+            layer_data = d.get('data', [])
 
             if layer_data:
                 ima = random.choice(layer_data)
@@ -138,7 +138,7 @@ class Image():
             to_image.save('{}/../images/{}.png'.format(layer_path, image_id))
 
             w, h = to_image.size
-            to_image.thumbnail((w / 4, h / 4), pil_image.ANTIALIAS)
+            to_image.thumbnail((w / 6, h / 6), pil_image.ANTIALIAS)
             to_image.save('{}/../mini_images/{}.png'.format(layer_path, image_id))
             temp_data = image.__dict__
 

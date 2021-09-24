@@ -8,7 +8,7 @@ from libs.base.schema import BaseSchema, Timestamp
 
 class PostLayerSchema(BaseSchema):
     percentage = fields.Int(missing=100)
-    layer_data = fields.List(fields.Str(), missing=[])
+    data = fields.List(fields.Str(), missing=[])
 
     class Meta:
         strict = True
