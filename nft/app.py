@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import re
@@ -52,10 +53,14 @@ def load_all_data():
     for _, _, file in os.walk('{}'.format(file_path)):
         for f in file:
             try:
-                with open('{}/{}'.format(file_path, f)) as content:
-                    d = json.load(content)
-                    with open('{}/{}'.format(map_file_path, f)) as map_content:
-                        d['layer'] = json.load(map_content)
+                with open('{}/{}'.format(file_path, f)) as f_json:
+
+                    d = json.loads(f_json.read())
+                    with open('{}/{}'.format(map_file_path, f)) as map_json:
+                        # print(map_json.read())
+                        map_data = map_json.read()
+                        layer = ast.literal_eval(map_data)
+                        d['layer'] = layer
                     data.append(d)
             except Exception as e:
                 print(e)

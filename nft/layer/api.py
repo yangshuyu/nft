@@ -1,10 +1,11 @@
-
 from flask import request
 from webargs.flaskparser import use_args
 
 from libs.base.resource import BaseResource
+from nft import ext
 from nft.layer.model import Layer, Image
-from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema
+from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema, BatchDeleteImage, \
+    BatchCombinationLayerSchema
 
 
 class LayersResource(BaseResource):
@@ -16,7 +17,7 @@ class LayersResource(BaseResource):
 class CombinationImagesResource(BaseResource):
     @use_args(CombinationLayerSchema)
     def post(self, args):
-        data = Image.combination_layer(**args)
+        data = Image.add_image(**args)
         return data, 201
 
 
@@ -36,4 +37,29 @@ class ImageResource(BaseResource):
     @use_args(CombinationLayerSchema)
     def put(self, args, image_id):
         data = Image.update(image_id, **args)
+        return data
+
+
+class BatchDeleteImagesResource(BaseResource):
+    @use_args(BatchDeleteImage)
+    def post(self, args):
+        Image.batch_delete(**args)
+        return {}
+
+
+class BatchCombinationImagesResource(BaseResource):
+    @use_args(BatchCombinationLayerSchema)
+    def post(self, args):
+        Image.batch_add_images(**args)
+        return {}, 201
+
+
+class ImageTaskProgressResource(BaseResource):
+    def get(self):
+        return {'total': ext.required_quantity, 'completed': ext.completed_quantity}
+
+
+class ImageLayerDashboard(BaseResource):
+    def get(self):
+        data = Image.get_image_layer_dashboard()
         return data

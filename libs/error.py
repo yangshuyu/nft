@@ -1,7 +1,6 @@
 from webargs.flaskparser import parser, abort
 
 
-
 # @parser.error_handler
 # def handle_error(e, req, schema, status_code, headers):
 #     if hasattr(e, 'kwargs') and e.kwargs.get('error_info'):
@@ -19,7 +18,10 @@ from webargs.flaskparser import parser, abort
 
 
 @parser.error_handler
-def handler_request_parsing_error(e, req, schema, status_code, headers):
+def handler_request_parsing_error(e, req=None, schema=None, status_code=None, headers=None):
+    if hasattr(e, "status_code") and hasattr(e, "messages"):
+        e.value = (e.status_code, 10000, e.messages)
+        error(error_info=e)
     if hasattr(e, "kwargs") and e.kwargs.get("error_info"):
         error(e.kwargs.get("error_info"), errors=e.messages)
     error(errors=e.messages)

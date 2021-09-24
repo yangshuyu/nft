@@ -7,12 +7,11 @@ import random
 import uuid
 
 from PIL import Image as pil_image
-from sqlalchemy.dialects.postgresql import JSONB
 
 from config import load_config
-from libs.base.model import BaseModel
 from libs.error import dynamic_error
 from nft import ext
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Layer():
@@ -54,30 +53,61 @@ class Image():
         self.timestamp = timestamp
 
     @classmethod
+    def add_image(cls, **kwargs):
+        layer_images = cls.combination_layer(**kwargs)
+        image_id, err = cls.calibration_md5(layer_images)
+        if err:
+            dynamic_error({}, code=422, message=err)
+        image, map_json, err = cls.create_image(layer_images, image_id)
+        if err:
+            dynamic_error({}, code=422, message=err)
+        result = cls.generate_data(image, map_json, image_id)
+        return result
+
+    @classmethod
+    def batch_add_images(cls, **kwargs):
+        from libs.task.batch_add_images_task import batch_add_images_task
+        if ext.required_quantity > 0:
+            dynamic_error({}, code=422, message='有任务在执行')
+
+        ThreadPoolExecutor(2).submit(batch_add_images_task, **kwargs)
+
+    @classmethod
     def combination_layer(cls, **kwargs):
-        data = kwargs.get('data', {})
         layer_path = load_config().LAYER_FILE
         layers = ['background', 'body', 'cloth', 'drink', 'earring',
                   'eyewear', 'hat', 'mouth', 'nacklace', 'props']
 
         layer_images = []
         for layer in layers:
-            d = data.get(layer, [])
+            d = kwargs.get(layer)
+            percentage = d.get('percentage', 100)
+            layer_data = d.get('layer_data', [])
 
-            ima = ''
-            if d:
-                ima = random.choice(d)
+            if layer_data:
+                ima = random.choice(layer_data)
             else:
                 for _, _, file_list in os.walk('{}/{}'.format(layer_path, layer)):
                     ima = random.choice(file_list)
                 ima = '{}/{}'.format(layer, ima)
-            layer_images.append(ima)
 
-        image = cls.draw_picture(layer_images)
-        return image
+            per = random.randint(0, 100)
+            if per < percentage:
+                layer_images.append(ima)
+        return layer_images
 
     @classmethod
-    def draw_picture(cls, layer_images):
+    def calibration_md5(cls, layer_images):
+        m = hashlib.md5(str(sorted(layer_images)).encode('utf-8')).hexdigest()
+
+        for d in ext.all_data:
+            if d['layer'].get('md5') == m:
+                return None, '图片重复'
+
+        return m, None
+
+    @classmethod
+    def create_image(cls, layer_images, image_id):
         layer_path = load_config().LAYER_FILE
         file_path = load_config().FILE
         width = 2000
@@ -87,22 +117,13 @@ class Image():
 
         timestamp = int(datetime.datetime.now().timestamp())
         image = Image(
-            name='Bored Mummy Baby #1',
+            name='name #1',
             attributes=[],
-            description='Bored Mummy Baby Waking Up (BMBWU) Collections series under Bored Mummy Waking Up NFT. '
-                        'Take good care of your  mummy baby, and great favor will be returned.',
+            description='this is an awsome project',
             timestamp=timestamp
         )
 
-        map_json = {}
-        # 校验图片是否重复
-        m = hashlib.md5(str(sorted(layer_images)).encode('utf-8')).hexdigest()
-
-        for d in ext.all_data:
-            if d['layer'].get('md5') == m:
-                dynamic_error({}, code=422, message='生成重复图片')
-        map_json['md5'] = m
-
+        map_json = {'md5': image_id}
         try:
             for i in range(len(layer_images)):
                 from_imge = pil_image.open('{}/{}'.format(layer_path, layer_images[i])).convert('RGBA')
@@ -113,27 +134,35 @@ class Image():
                 image.attributes.append({'trait_type': traits[0][0], 'value': traits[0][1]})
                 temp_map = layer_images[i].split('/')
                 map_json[temp_map[0]] = layer_images[i]
-            # to_image.show()
 
-            to_image.save('{}/../images/{}.png'.format(layer_path, m))
+            to_image.save('{}/../images/{}.png'.format(layer_path, image_id))
+
+            w, h = to_image.size
+            to_image.thumbnail((w / 4, h / 4), pil_image.ANTIALIAS)
+            to_image.save('{}/../mini_images/{}.png'.format(layer_path, image_id))
             temp_data = image.__dict__
-            with open('{}/file/json/{}.json'.format(file_path, str(m)), 'a') as content:
+
+            with open('{}/file/json/{}.json'.format(file_path, str(image_id)), 'a') as content:
                 content.write(json.dumps(temp_data))
 
-            with open('{}/file/map_json/{}.json'.format(file_path, str(m)), 'a') as content:
+            with open('{}/file/map_json/{}.json'.format(file_path, str(image_id)), 'a') as content:
                 content.write(json.dumps(map_json))
                 temp_data['layer'] = map_json
-
             ext.all_data.append(temp_data)
 
         except Exception as e:
-            print(e)
-            dynamic_error({}, code=422, message='图片生成失败' + str(e))
+            return None, None, '图片生成失败' + str(e)
+
+        return image, map_json, None
+
+    @classmethod
+    def generate_data(cls, image, map_json, image_id):
+
         result = image.__dict__
         result['layer'] = map_json
-        result['id'] = m
+        result['id'] = image_id
         result['url'] = '{}://{}/files/images/{}.png'.format(
-            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, m)
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, image_id)
         return result
 
     @classmethod
@@ -149,19 +178,19 @@ class Image():
                         result.remove(data)
                         break
         total = len(result)
-        data = result[(page-1)*per_page: page * per_page]
+        data = result[(page - 1) * per_page: page * per_page]
         for d in data:
             d['id'] = d['layer']['md5']
             d['url'] = '{}://{}/files/images/{}.png'.format(
                 load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
-        return result[(page-1)*per_page: page * per_page], total
+        return result[(page - 1) * per_page: page * per_page], total
 
     @classmethod
     def delete(cls, image_id):
         file_path = load_config().FILE
         try:
-            if os.path.exists(file_path + '/file/image/{}.png'.format(image_id)):
-                os.remove(file_path + '/file/image/{}.png'.format(image_id))
+            if os.path.exists(file_path + '/file/images/{}.png'.format(image_id)):
+                os.remove(file_path + '/file/images/{}.png'.format(image_id))
                 # os.unlink(file_path)
 
             if os.path.exists(file_path + '/file/json/{}.json'.format(image_id)):
@@ -180,6 +209,42 @@ class Image():
 
     @classmethod
     def update(cls, image_id, **kwargs):
-        image = cls.combination_layer(**kwargs)
+        image = cls.add_image(**kwargs)
         cls.delete(image_id)
         return image
+
+    @classmethod
+    def batch_delete(cls, **kwargs):
+        image_ids = kwargs.get('image_ids', [])
+
+        for image_id in image_ids:
+            cls.delete(image_id)
+
+    @classmethod
+    def get_image_layer_dashboard(cls):
+        result = {}
+        for data in ext.all_data:
+            layer = data.get('layer')
+            for key, value in layer.items():
+                if key == 'md5':
+                    continue
+                if result.get(key):
+                    result[key]['count'] += 1
+                    if result[key].get(value):
+                        result[key][value] += 1
+                    else:
+                        result[key][value] = 1
+                else:
+                    result[key] = {'count': 1, value: 1}
+
+        data = {}
+        for layer, layer_data in result.items():
+            data[layer] = {}
+            user_count = layer_data.get('count')
+            for key, value in layer_data.items():
+                if key == 'count':
+                    continue
+                k = key.split('-')[1].split(':')[0]
+                data[layer][k] = int(value/user_count*100)
+
+        return data
