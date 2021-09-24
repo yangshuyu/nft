@@ -75,6 +75,9 @@ def init_dirs():
         if not os.path.exists(file_path + '/file/images/'):
             os.mkdir(file_path + '/file/images/')
 
+        if not os.path.exists(file_path + '/file/mini_images/'):
+            os.mkdir(file_path + '/file/mini_images/')
+
         if not os.path.exists(file_path + '/file/json/'):
             os.mkdir(file_path + '/file/json/')
 
