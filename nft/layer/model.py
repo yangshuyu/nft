@@ -171,6 +171,7 @@ class Image():
         per_page = kwargs.get('per_page', 20)
         conditions = kwargs.get('conditions')
         result = copy.deepcopy(ext.all_data)
+        result = sorted(result, key=lambda item: item.get('timestamp', 0), reverse=True)
         if conditions:
             for data in ext.all_data:
                 for key, value in conditions.items():
