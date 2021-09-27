@@ -44,3 +44,10 @@ class PsdMixtureSchema(BaseSchema):
 
     class Meta:
         strict = True
+
+
+class PsdLayerSaveSchema(BaseSchema):
+    name = fields.Str(required=True)
+
+    class Meta:
+        strict = True

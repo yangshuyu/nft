@@ -5,8 +5,9 @@ import json
 # 获取logger
 from nft.api import CustomApi
 from nft.layer.api import LayersResource, ImagesResource, CombinationImagesResource, ImageResource, \
-    BatchDeleteImagesResource, BatchCombinationImagesResource, ImageTaskProgressResource, ImageLayerDashboard
-from nft.psd.api import PsdResource, PsdMixtureResource
+    BatchDeleteImagesResource, BatchCombinationImagesResource, ImageTaskProgressResource, ImageLayerDashboard, \
+    LayerRemoveResource, LayerMoveResource, LayerResource
+from nft.psd.api import PsdResource, PsdMixtureResource, PsdLayerResource
 
 """
     api的url统一注册口
@@ -17,6 +18,9 @@ api_v1 = CustomApi(api_bp_v1, prefix="/api/v1")
 
 #
 api_v1.add_resource(LayersResource, "/layers")
+api_v1.add_resource(LayerResource, '/layer')
+api_v1.add_resource(LayerRemoveResource, '/layer/remove')
+api_v1.add_resource(LayerMoveResource, '/layer/move')
 api_v1.add_resource(CombinationImagesResource, "/combination/images")
 api_v1.add_resource(ImagesResource, "/images")
 api_v1.add_resource(ImageResource, "/images/<image_id>")
@@ -28,6 +32,7 @@ api_v1.add_resource(ImageLayerDashboard, '/image/layer/dashboard')
 
 api_v1.add_resource(PsdResource, '/psd')
 api_v1.add_resource(PsdMixtureResource, '/psd/mixture')
+api_v1.add_resource(PsdLayerResource, '/psd/layer')
 
 
 BLUEPRINTS = [api_bp_v1]

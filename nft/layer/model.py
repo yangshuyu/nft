@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import random
+import shutil
 import uuid
 
 from PIL import Image as pil_image
@@ -24,7 +25,9 @@ class Layer():
         result = {
             'name': _get_str(file, "-", ":"),
             'weight': int(_get_str(file, ":", "{")),
-            'fullpath': path + "/" + file}
+            'fullpath': path + "/" + file,
+            'file': file
+        }
         traits_str = _get_str(file, "{", "}").split("&")
         result['traits'] = list(map(
             lambda x: (_get_str(x, "<", ">"), x.split(">")[1]), traits_str
@@ -42,6 +45,63 @@ class Layer():
                     for f in file:
                         result[dir_name].append(cls.decompose_layers(f, dir_name))
         return result
+
+    @classmethod
+    def remove_layer(cls, **kwargs):
+        layer = kwargs.get('layer')
+        name = kwargs.get('name')
+        layer_path = load_config().LAYER_FILE
+
+        if os.path.exists(layer_path + '/{}/{}'.format(layer, name)):
+            os.remove(layer_path + '/{}/{}'.format(layer, name))
+
+    @classmethod
+    def move_layer(cls, **kwargs):
+        ole_layer = kwargs.get('old_layer')
+        old_name = kwargs.get('old_name')
+        new_layer = kwargs.get('new_layer')
+        new_name = kwargs.get('new_name')
+
+        layer_path = load_config().LAYER_FILE
+
+        old_file_path = layer_path + '/{}/{}'.format(ole_layer, old_name)
+        new_file_path = layer_path + '/{}/{}'.format(new_layer, new_name)
+
+        if not os.path.exists(old_file_path):
+            dynamic_error({}, code=422, message='不存在该文件')
+
+        if os.path.exists(new_file_path):
+            dynamic_error({}, code=422, message='已存在该同名文件')
+
+        try:
+            shutil.move(old_file_path, new_file_path)
+        except Exception as e:
+            print(e)
+
+        return {'url': '{}://{}/files/layers/{}/{}'.format(
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, new_layer, new_name)}
+
+    @classmethod
+    def update(cls, **kwargs):
+        layer = kwargs.get('layer')
+        name = kwargs.get('name')
+        new_name = kwargs.get('new_name')
+
+        layer_path = load_config().LAYER_FILE
+
+        old_file_path = layer_path + '/{}/{}'.format(layer, name)
+        new_file_path = layer_path + '/{}/{}'.format(layer, new_name)
+
+        if not os.path.exists(old_file_path):
+            dynamic_error({}, code=422, message='不存在该文件')
+
+        try:
+            shutil.move(old_file_path, new_file_path)
+        except Exception as e:
+            print(e)
+
+        return {'url': '{}://{}/files/layers/{}/{}'.format(
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, layer, new_name)}
 
 
 class Image():
@@ -161,7 +221,7 @@ class Image():
         result = image.__dict__
         result['layer'] = map_json
         result['id'] = image_id
-        result['url'] = '{}://{}/files/images/{}.png'.format(
+        result['url'] = '{}://{}/files/mini_images/{}.png'.format(
             load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, image_id)
         return result
 
@@ -182,7 +242,9 @@ class Image():
         data = result[(page - 1) * per_page: page * per_page]
         for d in data:
             d['id'] = d['layer']['md5']
-            d['url'] = '{}://{}/files/images/{}.png'.format(
+            d['url'] = '{}://{}/files/mini_images/{}.png'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
+            d['lossless_url'] = '{}://{}/files/images/{}.png'.format(
                 load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
         return result[(page - 1) * per_page: page * per_page], total
 

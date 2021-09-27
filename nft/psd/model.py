@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import random
+import shutil
 import uuid
 
 from PIL import Image as pil_image
@@ -48,23 +49,48 @@ class Psd():
         for _, _, file_list in os.walk('{}/{}'.format(layer_path, layer)):
             for file in file_list:
                 if file == name + '.png':
-
                     dynamic_error({}, code=422, message='已存在该名称图层')
 
         pmd_file_path = file_path + '/file/psd/{}.psd'.format(psd_m)
-
+        print(pmd_file_path)
+        pmd_file_path = '/Users/yangshuyu/Downloads/me.psd'
         try:
+            print('-----------------')
             psd = PSDImage.open(pmd_file_path)
+            print(psd)
             for i in range(len(psd)):
                 if i not in save_index:
                     psd[i].visible = False
-                    print(psd[i])
-            file_layer_path = '{}/{}/{}.png'.format(layer_path, layer, name)
+            file_layer_path = '{}/file/psd_images/{}_{}.png'.format(file_path, layer, name)
             print(file_layer_path)
             psd.compose(True).save(file_layer_path)
 
         except Exception as e:
             dynamic_error({}, code=422, message='创建图层失败' + str(e))
 
-        return {'url': '{}://{}/files/layers/{}/{}.png'.format(
-            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, layer, name)}
+        new_name = '{}_{}.png'.format(layer, name)
+        return {
+            'url': '{}://{}/files/psd_images/{}'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, new_name),
+            'name': new_name
+        }
+
+    @classmethod
+    def add_image_to_layer(cls, **kwargs):
+        name = kwargs.get('name')
+        layer, image_name = name.split('_')
+
+        layer_path = load_config().LAYER_FILE
+        file_path = load_config().FILE
+
+        try:
+            old_file_path = '{}/file/psd_images/{}'.format(file_path, name)
+            new_file_path = '{}/{}/{}'.format(layer_path, layer, image_name)
+
+            shutil.move(old_file_path, new_file_path)
+        except Exception as e:
+            print(e)
+            dynamic_error({}, code=422, message='移动文件失败' + str(e))
+
+        return {'url': '{}://{}/files/layers/{}/{}'.format(
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, layer, image_name)}

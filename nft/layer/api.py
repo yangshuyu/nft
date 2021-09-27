@@ -5,12 +5,33 @@ from libs.base.resource import BaseResource
 from nft import ext
 from nft.layer.model import Layer, Image
 from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema, BatchDeleteImage, \
-    BatchCombinationLayerSchema
+    BatchCombinationLayerSchema, LayerRemoveSchema, LayerMoveSchema, LayerPutSchema
 
 
 class LayersResource(BaseResource):
     def get(self):
         data = Layer.get_layers_by_query()
+        return data
+
+
+class LayerResource(BaseResource):
+    @use_args(LayerPutSchema)
+    def put(self, args):
+        data = Layer.update(**args)
+        return data
+
+
+class LayerRemoveResource(BaseResource):
+    @use_args(LayerRemoveSchema)
+    def post(self, args):
+        Layer.remove_layer(**args)
+        return {}
+
+
+class LayerMoveResource(BaseResource):
+    @use_args(LayerMoveSchema)
+    def post(self, args):
+        data = Layer.move_layer(**args)
         return data
 
 

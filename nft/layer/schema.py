@@ -68,3 +68,30 @@ class ImageSchema(BaseSchema):
 
     class Meta:
         strict = True
+
+
+class LayerRemoveSchema(BaseSchema):
+    layer = fields.Str(required=True)
+    name = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class LayerMoveSchema(BaseSchema):
+    old_layer = fields.Str(required=True)
+    old_name = fields.Str(required=True)
+    new_layer = fields.Str(required=True)
+    new_name = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class LayerPutSchema(BaseSchema):
+    layer = fields.Str(required=True)
+    name = fields.Str(required=True)
+    new_name = fields.Str(required=True)
+
+    class Meta:
+        strict = True
