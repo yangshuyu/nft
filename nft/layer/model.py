@@ -58,10 +58,11 @@ class Layer():
         layer_path = load_config().LAYER_FILE
         for path, dir_list, file_list in os.walk(layer_path):
             for dir_name in dir_list:
-                for _, _, file in os.walk('{}/{}'.format(layer_path, dir_name)):
+                for r, _, file in os.walk('{}/{}'.format(layer_path, dir_name)):
                     for f in file:
-                        if q and q not in f:
-                            continue
+                        if q:
+                            if q not in f and q not in r:
+                                continue
                         d = cls.decompose_layers(f, dir_name)
                         d['layer'] = dir_name
                         data.append(d)
