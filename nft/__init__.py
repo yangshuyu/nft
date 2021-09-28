@@ -6,7 +6,7 @@ import json
 from nft.api import CustomApi
 from nft.layer.api import LayersResource, ImagesResource, CombinationImagesResource, ImageResource, \
     BatchDeleteImagesResource, BatchCombinationImagesResource, ImageTaskProgressResource, ImageLayerDashboard, \
-    LayerRemoveResource, LayerMoveResource, LayerResource
+    LayerRemoveResource, LayerMoveResource, LayerResource, LayersListResource
 from nft.psd.api import PsdResource, PsdMixtureResource, PsdLayerResource
 
 """
@@ -18,6 +18,7 @@ api_v1 = CustomApi(api_bp_v1, prefix="/api/v1")
 
 #
 api_v1.add_resource(LayersResource, "/layers")
+api_v1.add_resource(LayersListResource, '/layers/list')
 api_v1.add_resource(LayerResource, '/layer')
 api_v1.add_resource(LayerRemoveResource, '/layer/remove')
 api_v1.add_resource(LayerMoveResource, '/layer/move')

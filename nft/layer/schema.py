@@ -6,6 +6,15 @@ from config import load_config
 from libs.base.schema import BaseSchema, Timestamp
 
 
+class LayerListQuerySchema(BaseSchema):
+    page = fields.Int(missing=1)
+    per_page = fields.Int(missing=20)
+    q = fields.Str()
+
+    class Meta:
+        strict = True
+
+
 class PostLayerSchema(BaseSchema):
     percentage = fields.Int(missing=100)
     data = fields.List(fields.Str(), missing=[])

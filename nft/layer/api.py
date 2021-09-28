@@ -5,13 +5,21 @@ from libs.base.resource import BaseResource
 from nft import ext
 from nft.layer.model import Layer, Image
 from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema, BatchDeleteImage, \
-    BatchCombinationLayerSchema, LayerRemoveSchema, LayerMoveSchema, LayerPutSchema
+    BatchCombinationLayerSchema, LayerRemoveSchema, LayerMoveSchema, LayerPutSchema, LayerListQuerySchema
 
 
 class LayersResource(BaseResource):
     def get(self):
         data = Layer.get_layers_by_query()
         return data
+
+
+class LayersListResource(BaseResource):
+    @use_args(LayerListQuerySchema)
+    def get(self, args):
+        data, total = Layer.get_layers_list_by_query(**args)
+        return self.paginate(
+            data, total, args.get('page', 1), args.get('per_page', 20))
 
 
 class LayerResource(BaseResource):

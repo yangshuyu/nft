@@ -26,7 +26,9 @@ class Layer():
             'name': _get_str(file, "-", ":"),
             'weight': int(_get_str(file, ":", "{")),
             'fullpath': path + "/" + file,
-            'file': file
+            'file': file,
+            'url': '{}://{}/files/layers/{}'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, file)
         }
         traits_str = _get_str(file, "{", "}").split("&")
         result['traits'] = list(map(
@@ -45,6 +47,26 @@ class Layer():
                     for f in file:
                         result[dir_name].append(cls.decompose_layers(f, dir_name))
         return result
+
+    @classmethod
+    def get_layers_list_by_query(cls, **kwargs):
+        data = []
+        page = kwargs.get('page', 1)
+        per_page = kwargs.get('per_page', 20)
+        q = kwargs.get('q')
+
+        layer_path = load_config().LAYER_FILE
+        for path, dir_list, file_list in os.walk(layer_path):
+            for dir_name in dir_list:
+                for _, _, file in os.walk('{}/{}'.format(layer_path, dir_name)):
+                    for f in file:
+                        if q and q not in f:
+                            continue
+                        d = cls.decompose_layers(f, dir_name)
+                        d['layer'] = dir_name
+                        data.append(d)
+
+        return data[(page - 1) * per_page: page * per_page], len(data)
 
     @classmethod
     def remove_layer(cls, **kwargs):
@@ -308,6 +330,6 @@ class Image():
                 if key == 'count':
                     continue
                 k = key.split('-')[1].split(':')[0]
-                data[layer][k] = int(value/user_count*100)
+                data[layer][k] = int(value / user_count * 100)
 
         return data
