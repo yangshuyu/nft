@@ -27,8 +27,8 @@ class Layer():
             'weight': int(_get_str(file, ":", "{")),
             'fullpath': path + "/" + file,
             'file': file,
-            'url': '{}://{}/files/layers/{}'.format(
-                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, file)
+            'url': '{}://{}/files/layers/{}/{}'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, path, file)
         }
         traits_str = _get_str(file, "{", "}").split("&")
         result['traits'] = list(map(
