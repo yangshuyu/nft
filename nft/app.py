@@ -87,5 +87,8 @@ def init_dirs():
         if not os.path.exists(file_path + '/file/psd/'):
             os.mkdir(file_path + '/file/psd/')
 
+        if not os.path.exists(file_path + '/file/psd_images/'):
+            os.mkdir(file_path + '/file/psd_images/')
+
     except Exception as e:
         print(e)
