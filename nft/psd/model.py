@@ -77,7 +77,8 @@ class Psd():
     @classmethod
     def add_image_to_layer(cls, **kwargs):
         name = kwargs.get('name')
-        layer, image_name = name.split('_')
+        arry = name.split('_')
+        layer, image_name = arry[0], '_'.join(arry[1:])
 
         layer_path = load_config().LAYER_FILE
         file_path = load_config().FILE
