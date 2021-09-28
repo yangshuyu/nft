@@ -53,7 +53,6 @@ class Psd():
 
         pmd_file_path = file_path + '/file/psd/{}.psd'.format(psd_m)
         print(pmd_file_path)
-        pmd_file_path = '/Users/yangshuyu/Downloads/me.psd'
         try:
             print('-----------------')
             psd = PSDImage.open(pmd_file_path)
