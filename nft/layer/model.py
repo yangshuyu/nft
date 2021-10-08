@@ -45,7 +45,8 @@ class Layer():
                 result[dir_name] = []
                 for _, _, file in os.walk('{}/{}'.format(layer_path, dir_name)):
                     for f in file:
-                        result[dir_name].append(cls.decompose_layers(f, dir_name))
+                        if not f.startswith('.'):
+                            result[dir_name].append(cls.decompose_layers(f, dir_name))
         return result
 
     @classmethod
@@ -60,12 +61,13 @@ class Layer():
             for dir_name in dir_list:
                 for r, _, file in os.walk('{}/{}'.format(layer_path, dir_name)):
                     for f in file:
-                        if q:
-                            if q not in f and q not in r:
-                                continue
-                        d = cls.decompose_layers(f, dir_name)
-                        d['layer'] = dir_name
-                        data.append(d)
+                        if not f.startswith('.'):
+                            if q:
+                                if q not in f and q not in r:
+                                    continue
+                            d = cls.decompose_layers(f, dir_name)
+                            d['layer'] = dir_name
+                            data.append(d)
 
         return data[(page - 1) * per_page: page * per_page], len(data)
 
@@ -171,7 +173,11 @@ class Image():
                 ima = random.choice(layer_data)
             else:
                 for _, _, file_list in os.walk('{}/{}'.format(layer_path, layer)):
-                    ima = random.choice(file_list)
+                    correct_file_list = []
+                    for f in file_list:
+                        if not f.startswith('.'):
+                            correct_file_list.append(f)
+                    ima = random.choice(correct_file_list)
                 ima = '{}/{}'.format(layer, ima)
 
             per = random.randint(0, 100)
