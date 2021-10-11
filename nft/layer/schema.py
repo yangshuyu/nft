@@ -40,7 +40,7 @@ class CombinationLayerSchema(BaseSchema):
 
 
 class BatchCombinationLayerSchema(BaseSchema):
-    data = fields.Nested(CombinationLayerSchema)
+    data = fields.Dict(required=True)
     nums = fields.Int(validate=lambda val: 10000 > val > 0, required=True)
 
     class Meta:

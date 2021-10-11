@@ -44,8 +44,8 @@ class LayerMoveResource(BaseResource):
 
 
 class CombinationImagesResource(BaseResource):
-    @use_args(CombinationLayerSchema)
-    def post(self, args):
+    def post(self):
+        args = request.json
         data = Image.add_image(**args)
         return data, 201
 
@@ -63,8 +63,8 @@ class ImageResource(BaseResource):
         Image.delete(image_id)
         return {}, 204
 
-    @use_args(CombinationLayerSchema)
-    def put(self, args, image_id):
+    def put(self, image_id):
+        args = request.json
         data = Image.update(image_id, **args)
         return data
 
