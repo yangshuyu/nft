@@ -69,8 +69,10 @@ class Psd():
 
         new_name = '{}_{}.png'.format(layer, name)
         return {
-            'url': '{}://{}/files/psd_images/{}'.format(
-                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, new_name),
+            'url': '{}://{}/files/psd_images/{}?{}'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, new_name,
+                int(datetime.datetime.now().timestamp())
+            ),
             'name': new_name
         }
 
