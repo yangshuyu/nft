@@ -160,8 +160,19 @@ class Image():
     @classmethod
     def combination_layer(cls, **kwargs):
         layer_path = load_config().LAYER_FILE
-        layers = ['background', 'body', 'cloth', 'drink', 'earring',
-                  'eyewear', 'hat', 'mouth', 'nacklace', 'props']
+
+        temp_layers, layers = [], []
+        for dir, _, _ in os.walk('{}'.format(layer_path)):
+            if layer_path == dir or 'temp' in dir:
+                continue
+            for _, _, file_list_c in os.walk('{}'.format(dir)):
+                if file_list_c:
+                    tl = {'k': dir.split('/')[-1], 'v': int(file_list_c[0].split('-')[0])}
+                    temp_layers.append(tl)
+
+        temp_layers = sorted(temp_layers, key=lambda t1: t1.get('v'))
+        for t in temp_layers:
+            layers.append(t['k'])
 
         layer_images = []
         for layer in layers:
