@@ -6,10 +6,18 @@ from config import load_config
 from libs.base.schema import BaseSchema, Timestamp
 
 
+class LayerQuerySchema(BaseSchema):
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
 class LayerListQuerySchema(BaseSchema):
     page = fields.Int(missing=1)
     per_page = fields.Int(missing=20)
     q = fields.Str()
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
@@ -82,6 +90,7 @@ class ImageSchema(BaseSchema):
 class LayerRemoveSchema(BaseSchema):
     layer = fields.Str(required=True)
     name = fields.Str(required=True)
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
@@ -92,6 +101,7 @@ class LayerMoveSchema(BaseSchema):
     old_name = fields.Str(required=True)
     new_layer = fields.Str(required=True)
     new_name = fields.Str(required=True)
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
@@ -101,6 +111,8 @@ class LayerPutSchema(BaseSchema):
     layer = fields.Str(required=True)
     name = fields.Str(required=True)
     new_name = fields.Str(required=True)
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
+

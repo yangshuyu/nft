@@ -16,10 +16,11 @@ class DevelopmentConfig(Config):
 
     FILE = os.environ.get('NFT_FILE', os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-    LAYER_FILE = os.environ.get(
-        'LAYER_FILE',
-        '{}/{}'.format(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), 'file/layers')
-    )
+    PROJECT_FILE = '{}/{}'.format(
+        FILE, 'file/projects')
+
+    SECRET_KEY = 'nft'
+    AUDIENCE = "nft"
 
     # SQL
     PSQL_USER = ""

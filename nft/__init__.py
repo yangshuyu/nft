@@ -3,10 +3,12 @@ import copy
 import json
 
 # 获取logger
+from nft.account.api import UsersResource, LoginResource, ManageUserResource
 from nft.api import CustomApi
 from nft.layer.api import LayersResource, ImagesResource, CombinationImagesResource, ImageResource, \
     BatchDeleteImagesResource, BatchCombinationImagesResource, ImageTaskProgressResource, ImageLayerDashboard, \
     LayerRemoveResource, LayerMoveResource, LayerResource, LayersListResource
+from nft.project.api import ProjectsResource
 from nft.psd.api import PsdResource, PsdMixtureResource, PsdLayerResource
 
 """
@@ -36,33 +38,44 @@ api_v1.add_resource(PsdMixtureResource, '/psd/mixture')
 api_v1.add_resource(PsdLayerResource, '/psd/layer')
 
 
+api_v1.add_resource(UsersResource, '/users')
+api_v1.add_resource(LoginResource, '/login')
+api_v1.add_resource(ManageUserResource, '/manage/users/<user_id>')
+
+api_v1.add_resource(ProjectsResource, '/projects')
+
+
 BLUEPRINTS = [api_bp_v1]
 
 # api_v1.add_resource(AddGitTags, '/gitlab/users')
 __all__ = ["BLUEPRINTS"]
 
-# @api_bp_v1.before_request
-# def before_request():
-#     try:
-#         if request.method == "OPTIONS":
-#             pass
-#         elif request.method == "GET":
-#             logger.info("url:{} ,method:{}".format(request.url, request.method))
-#         else:
-#             logger.info(
-#                 "url:{} ,method:{},请求参数:{}".format(
-#                     request.url, request.method, request.json
-#                 )
-#             )
-#     # if request.method =='OPTIONS':
-#     #     resp = current_app.make_default_options_response()
-#     #     if 'ACCESS_CONTROL_REQUEST_HEADERS' in request.headers:
-#     #         resp.headers['Access-Control-Allow-Headers'] = request.headers['ACCESS_CONTROL_REQUEST_HEADERS']
-#     #     resp.headers['Access-Control-Allow-Methods'] = request.headers['Access-Control-Request-Method']
-#     #     resp.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
-#     #     return resp
-#     except Exception as e:
-#         logger.error("Error", exc_info=True)
+
+@api_bp_v1.before_request
+def before_request():
+
+    # if request.method =='OPTIONS':
+    #     resp = current_app.make_default_options_response()
+    #     if 'ACCESS_CONTROL_REQUEST_HEADERS' in request.headers:
+    #         resp.headers['Access-Control-Allow-Headers'] = request.headers['ACCESS_CONTROL_REQUEST_HEADERS']
+    #     resp.headers['Access-Control-Allow-Methods'] = request.headers['Access-Control-Request-Method']
+    #     resp.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
+    #     return resp
+    try:
+        # request.form['project'] = '1'
+        project = request.headers.get('project')
+        if project:
+            if request.json:
+                request.json['project'] = project
+            else:
+                request.form = dict(request.form)
+                if request.form:
+                    request.form['project'] = project
+                else:
+                    request.form = {'project': project}
+    except Exception as e:
+        print(e)
+
 
 
 

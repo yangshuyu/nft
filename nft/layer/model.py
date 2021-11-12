@@ -38,7 +38,11 @@ class Layer():
 
     @classmethod
     def get_layers_by_query(cls, **kwargs):
-        layer_path = load_config().LAYER_FILE
+        project = kwargs.get('project')
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
+
         result = {}
         for path, dir_list, file_list in os.walk(layer_path):
             for dir_name in dir_list:
@@ -56,7 +60,10 @@ class Layer():
         per_page = kwargs.get('per_page', 20)
         q = kwargs.get('q')
 
-        layer_path = load_config().LAYER_FILE
+        project = kwargs.get('project')
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
         for path, dir_list, file_list in os.walk(layer_path):
             for dir_name in dir_list:
                 for r, _, file in os.walk('{}/{}'.format(layer_path, dir_name)):
@@ -75,7 +82,11 @@ class Layer():
     def remove_layer(cls, **kwargs):
         layer = kwargs.get('layer')
         name = kwargs.get('name')
-        layer_path = load_config().LAYER_FILE
+
+        project = kwargs.get('project')
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
 
         if os.path.exists(layer_path + '/{}/{}'.format(layer, name)):
             os.remove(layer_path + '/{}/{}'.format(layer, name))
@@ -87,7 +98,10 @@ class Layer():
         new_layer = kwargs.get('new_layer')
         new_name = kwargs.get('new_name')
 
-        layer_path = load_config().LAYER_FILE
+        project = kwargs.get('project')
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
 
         old_file_path = layer_path + '/{}/{}'.format(ole_layer, old_name)
         new_file_path = layer_path + '/{}/{}'.format(new_layer, new_name)
@@ -112,7 +126,10 @@ class Layer():
         name = kwargs.get('name')
         new_name = kwargs.get('new_name')
 
-        layer_path = load_config().LAYER_FILE
+        project = kwargs.get('project')
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
 
         old_file_path = layer_path + '/{}/{}'.format(layer, name)
         new_file_path = layer_path + '/{}/{}'.format(layer, new_name)
@@ -125,7 +142,7 @@ class Layer():
         except Exception as e:
             print(e)
 
-        return {'url': '{}://{}/files/layers/{}/{}'.format(
+        return {'url': '{}://{}/files/projects/layers/{}/{}'.format(
             load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, layer, new_name)}
 
 
@@ -139,6 +156,9 @@ class Image():
 
     @classmethod
     def add_image(cls, **kwargs):
+        project = kwargs.get('project')
+        if not project:
+            dynamic_error({}, code=422, message='请选择项目')
         layer_images = cls.combination_layer(**kwargs)
         image_id, err = cls.calibration_md5(layer_images)
         if err:
@@ -159,7 +179,10 @@ class Image():
 
     @classmethod
     def combination_layer(cls, **kwargs):
-        layer_path = load_config().LAYER_FILE
+        project = kwargs.get('project')
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
 
         temp_layers, layers = [], []
         for dir, _, _ in os.walk('{}'.format(layer_path)):

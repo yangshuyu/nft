@@ -22,7 +22,7 @@ def create_app(app_name="api", blueprints=None):
         blueprints = BLUEPRINTS
     blueprints_resister(app, blueprints)
     extensions_load(app)
-    init_dirs()
+
     return app
 
 
@@ -43,29 +43,75 @@ def extensions_load(app):
     # migrate.init_app(app, db)
     #
     CORS(app, resources={r"*": {"origins": "*", "expose_headers": "X-Total"}})
-    ext.all_data = load_all_data()
+    # init_dirs()
+    load_all_users()
+    load_all_projects()
+    load_project_data()
+    load_user_data()
 
 
-def load_all_data():
-    file_path = load_config().FILE + '/file/json'
-    map_file_path = load_config().FILE + '/file/map_json'
-    data = []
-    for _, _, file in os.walk('{}'.format(file_path)):
-        for f in file:
-            try:
-                with open('{}/{}'.format(file_path, f)) as f_json:
+def load_all_users():
+    file_path = load_config().FILE + '/file/users.json'
+    with open(file_path) as f:
+        ext.users = json.loads(f.read())
 
-                    d = json.loads(f_json.read())
-                    with open('{}/{}'.format(map_file_path, f)) as map_json:
-                        # print(map_json.read())
-                        map_data = map_json.read()
-                        layer = ast.literal_eval(map_data)
-                        d['layer'] = layer
-                    data.append(d)
-            except Exception as e:
-                print(e)
 
-    return data
+def load_all_projects():
+    file_path = load_config().PROJECT_FILE
+    for _, b, file in os.walk('{}'.format(file_path)):
+        ext.projects = b
+        break
+
+
+def load_project_data():
+    for project in ext.projects:
+        file_path = '{}/{}/{}'.format(load_config().PROJECT_FILE, project, 'json')
+        map_file_path = '{}/{}/{}'.format(load_config().PROJECT_FILE, project, 'map_json')
+
+        data = []
+        for _, _, file in os.walk('{}'.format(file_path)):
+            for f in file:
+                try:
+                    with open('{}/{}'.format(file_path, f)) as f_json:
+
+                        d = json.loads(f_json.read())
+                        with open('{}/{}'.format(map_file_path, f)) as map_json:
+                            # print(map_json.read())
+                            map_data = map_json.read()
+                            layer = ast.literal_eval(map_data)
+                            d['layer'] = layer
+                        data.append(d)
+                except Exception as e:
+                    print(e)
+        ext.project_all_data[project] = data
+
+
+def load_user_data():
+    for user in ext.users:
+        project_all_data = {}
+        for project in user.get('projects', []):
+            file_path = '{}/{}/{}/{}'.format(
+                load_config().PROJECT_FILE, project, user.get('id'), 'json')
+            map_file_path = '{}/{}/{}/{}'.format(
+                load_config().PROJECT_FILE, project, user.get('id'),'map_json')
+
+            data = []
+            for _, _, file in os.walk('{}'.format(file_path)):
+                for f in file:
+                    try:
+                        with open('{}/{}'.format(file_path, f)) as f_json:
+
+                            d = json.loads(f_json.read())
+                            with open('{}/{}'.format(map_file_path, f)) as map_json:
+                                # print(map_json.read())
+                                map_data = map_json.read()
+                                layer = ast.literal_eval(map_data)
+                                d['layer'] = layer
+                            data.append(d)
+                    except Exception as e:
+                        print(e)
+            project_all_data[project] = data
+        ext.user_all_data[user.get('id')] = project_all_data
 
 
 def init_dirs():
