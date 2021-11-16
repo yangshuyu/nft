@@ -157,16 +157,21 @@ class Image():
     @classmethod
     def add_image(cls, **kwargs):
         project = kwargs.get('project')
+        user = kwargs.get('user', {})
         if not project:
             dynamic_error({}, code=422, message='请选择项目')
+
+        if project not in user.get('projects', []):
+            dynamic_error({}, code=422, message='请选择项目')
+
         layer_images = cls.combination_layer(**kwargs)
-        image_id, err = cls.calibration_md5(layer_images)
+        image_id, err = cls.calibration_md5(layer_images, user, project)
         if err:
             dynamic_error({}, code=422, message=err)
-        image, map_json, err = cls.create_image(layer_images, image_id)
+        image, map_json, err = cls.create_image(layer_images, image_id, user, project)
         if err:
             dynamic_error({}, code=422, message=err)
-        result = cls.generate_data(image, map_json, image_id)
+        result = cls.generate_data(image, map_json, image_id, user, project)
         return result
 
     @classmethod
@@ -183,7 +188,6 @@ class Image():
         layer_path = '{}/{}/{}'.format(
             load_config().PROJECT_FILE, project, 'layers'
         )
-
         temp_layers, layers = [], []
         for dir, _, _ in os.walk('{}'.format(layer_path)):
             if layer_path == dir or 'temp' in dir:
@@ -220,19 +224,22 @@ class Image():
         return layer_images
 
     @classmethod
-    def calibration_md5(cls, layer_images):
+    def calibration_md5(cls, layer_images, user, project):
         m = hashlib.md5(str(sorted(layer_images)).encode('utf-8')).hexdigest()
-
-        for d in ext.all_data:
+        for d in ext.user_all_data.get(user.get('id')).get(project):
             if d['layer'].get('md5') == m:
                 return None, '图片重复'
-
         return m, None
 
     @classmethod
-    def create_image(cls, layer_images, image_id):
-        layer_path = load_config().LAYER_FILE
-        file_path = load_config().FILE
+    def create_image(cls, layer_images, image_id, user, project):
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
+        save_path = '{}/{}/users/{}'.format(
+            load_config().PROJECT_FILE, project, user.get('id')
+        )
+
         width = 2000
         height = 2000
 
@@ -258,20 +265,32 @@ class Image():
                 temp_map = layer_images[i].split('/')
                 map_json[temp_map[0]] = layer_images[i]
 
-            to_image.save('{}/../images/{}.png'.format(layer_path, image_id))
+            if not os.path.exists(save_path + '/images/'):
+                os.mkdir(save_path + '/images/')
+
+            if not os.path.exists(save_path + '/mini_images/'):
+                os.mkdir(save_path + '/mini_images/')
+
+            to_image.save('{}/images/{}.png'.format(save_path, image_id))
 
             w, h = to_image.size
             to_image.thumbnail((w / 6, h / 6), pil_image.ANTIALIAS)
-            to_image.save('{}/../mini_images/{}.png'.format(layer_path, image_id))
+            to_image.save('{}/mini_images/{}.png'.format(save_path, image_id))
             temp_data = image.__dict__
 
-            with open('{}/file/json/{}.json'.format(file_path, str(image_id)), 'a') as content:
+            if not os.path.exists(save_path + '/json/'):
+                os.mkdir(save_path + '/json/')
+
+            if not os.path.exists(save_path + '/map_json/'):
+                os.mkdir(save_path + '/map_json/')
+
+            with open('{}/json/{}.json'.format(save_path, str(image_id)), 'a') as content:
                 content.write(json.dumps(temp_data))
 
-            with open('{}/file/map_json/{}.json'.format(file_path, str(image_id)), 'a') as content:
+            with open('{}/map_json/{}.json'.format(save_path, str(image_id)), 'a') as content:
                 content.write(json.dumps(map_json))
                 temp_data['layer'] = map_json
-            ext.all_data.append(temp_data)
+            ext.user_all_data[user.get('id')][project].append(temp_data)
 
         except Exception as e:
             return None, None, '图片生成失败' + str(e)
@@ -279,13 +298,13 @@ class Image():
         return image, map_json, None
 
     @classmethod
-    def generate_data(cls, image, map_json, image_id):
+    def generate_data(cls, image, map_json, image_id, user, project):
 
         result = image.__dict__
         result['layer'] = map_json
         result['id'] = image_id
-        result['url'] = '{}://{}/files/mini_images/{}.png'.format(
-            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, image_id)
+        result['url'] = '{}://{}/files/projects/{}/{}/mini_images/{}.png'.format(
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, user.get('id'), image_id)
         return result
 
     @classmethod
@@ -293,50 +312,113 @@ class Image():
         page = kwargs.get('page', 1)
         per_page = kwargs.get('per_page', 20)
         conditions = kwargs.get('conditions')
-        result = copy.deepcopy(ext.all_data)
+        project = kwargs.get('project')
+        user = kwargs.get('user')
+        t = kwargs.get('type')
+
+        if t == 0:
+            result = copy.deepcopy(ext.project_all_data.get(project))
+            if conditions:
+                for data in ext.project_all_data.get(project):
+                    for key, value in conditions.items():
+                        if data['layer'].get(key) not in value:
+                            result.remove(data)
+                            break
+        else:
+            result = copy.deepcopy(ext.user_all_data.get(user.get('id')).get(project))
+            if conditions:
+                for data in ext.user_all_data.get(user.get('id')).get(project):
+                    for key, value in conditions.items():
+                        if data['layer'].get(key) not in value:
+                            result.remove(data)
+                            break
+
         result = sorted(result, key=lambda item: item.get('timestamp', 0), reverse=True)
-        if conditions:
-            for data in ext.all_data:
-                for key, value in conditions.items():
-                    if data['layer'].get(key) not in value:
-                        result.remove(data)
-                        break
+
         total = len(result)
         data = result[(page - 1) * per_page: page * per_page]
         for d in data:
-            d['id'] = d['layer']['md5']
-            d['url'] = '{}://{}/files/mini_images/{}.png'.format(
-                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
-            d['lossless_url'] = '{}://{}/files/images/{}.png'.format(
-                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
-        return result[(page - 1) * per_page: page * per_page], total
+            if t == 0:
+                d['id'] = d['layer']['md5']
+                d['url'] = '{}://{}/files/mini_images/{}.png'.format(
+                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
+                d['lossless_url'] = '{}://{}/files/images/{}.png'.format(
+                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
+            else:
+                d['id'] = d['layer']['md5']
+                d['url'] = '{}://{}/files/projects/{}/users/{}/mini_images/{}.png'.format(
+                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN,
+                    project, user.get('id'), d['layer']['md5'])
+                d['lossless_url'] = '{}://{}/files/projects/{}/users/{}images/{}.png'.format(
+                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN,
+                    project, user.get('id'), d['layer']['md5'])
+
+        return data, total
 
     @classmethod
-    def delete(cls, image_id):
-        file_path = load_config().FILE
-        try:
-            if os.path.exists(file_path + '/file/images/{}.png'.format(image_id)):
-                os.remove(file_path + '/file/images/{}.png'.format(image_id))
-                # os.unlink(file_path)
+    def delete(cls, **kwargs):
+        image_id = kwargs.get('image_id')
+        project = kwargs.get('project')
+        t = kwargs.get('type')
+        user = kwargs.get('user')
+        file_path = load_config().PROJECT_FILE
+        if t == 0:
+            try:
+                if os.path.exists(file_path + '/{}/images/{}.png'.format(project, image_id)):
+                    os.remove(file_path + '/{}/images/{}.png'.format(project, image_id))
 
-            if os.path.exists(file_path + '/file/json/{}.json'.format(image_id)):
-                os.remove(file_path + '/file/json/{}.json'.format(image_id))
-                # os.unlink(file_path)
+                if os.path.exists(file_path + '/{}/mini_image/{}.png'.format(project, image_id)):
+                    os.remove(file_path + '/{}/mini_image/{}.png'.format(project, image_id))
+                    # os.unlink(file_path)
+                print(file_path + '/{}/json/{}.json'.format(project, image_id))
+                if os.path.exists(file_path + '/{}/json/{}.json'.format(project, image_id)):
+                    os.remove(file_path + '/{}/json/{}.json'.format(project, image_id))
+                    # os.unlink(file_path)
 
-            if os.path.exists(file_path + '/file/map_json/{}.json'.format(image_id)):
-                os.remove(file_path + '/file/map_json/{}.json'.format(image_id))
-                # os.unlink(file_path)
+                if os.path.exists(file_path + '/{}/map_json/{}.json'.format(project, image_id)):
+                    os.remove(file_path + '/{}/map_json/{}.json'.format(project, image_id))
+                    # os.unlink(file_path)
 
-            for d in ext.all_data:
-                if d['layer'].get('md5') == image_id:
-                    ext.all_data.remove(d)
-        except Exception as e:
-            print(e)
+                for d in ext.project_all_data.get(project):
+                    if d['layer'].get('md5') == image_id:
+                        ext.project_all_data.get(project).remove(d)
+            except Exception as e:
+                print(e)
+        elif t == 1:
+            try:
+                if os.path.exists(file_path + '/{}/users/{}/images/{}.png'.format(
+                        project, user.get('id'), image_id)):
+                    os.remove(file_path + '/{}/users/{}/images/{}.png'.format(
+                        project, user.get('id'), image_id))
+                    # os.unlink(file_path)
+
+                if os.path.exists(file_path + '/{}/users/{}/min_image/{}.png'.format(
+                        project, user.get('id'), image_id)):
+                    os.remove(file_path + '/{}/users/{}/mini_image/{}.png'.format(
+                        project, user.get('id'), image_id))
+
+                if os.path.exists(file_path + '/{}/users/{}/json/{}.json'.format(
+                        project, user.get('id'), image_id)):
+                    os.remove(file_path + '/{}/users/{}/json/{}.json'.format(
+                        project, user.get('id'), image_id))
+                    # os.unlink(file_path)
+
+                if os.path.exists(file_path + '/{}/users/{}/map_json/{}.json'.format(
+                        project, user.get('id'), image_id)):
+                    os.remove(file_path + '/{}/users/{}/map_json/{}.json'.format(
+                        project, user.get('id'), image_id))
+                    # os.unlink(file_path)
+                for d in ext.user_all_data.get(user.get('id')).get(project):
+                    if d['layer'].get('md5') == image_id:
+                        ext.user_all_data.get(user.get('id')).get(project).remove(d)
+            except Exception as e:
+                print(e)
 
     @classmethod
     def update(cls, image_id, **kwargs):
         image = cls.add_image(**kwargs)
-        cls.delete(image_id)
+        kwargs['image_id'] = image_id
+        cls.delete(**kwargs)
         return image
 
     @classmethod
@@ -344,12 +426,22 @@ class Image():
         image_ids = kwargs.get('image_ids', [])
 
         for image_id in image_ids:
-            cls.delete(image_id)
+            kwargs['image_id'] = image_id
+            cls.delete(**kwargs)
 
     @classmethod
-    def get_image_layer_dashboard(cls):
+    def get_image_layer_dashboard(cls, **kwargs):
         result = {}
-        for data in ext.all_data:
+        t = kwargs.get('type')
+        project = kwargs.get('project')
+        user = kwargs.get('user')
+
+        if t == 0:
+            all_data = ext.project_all_data.get(project)
+        else:
+            all_data = ext.user_all_data.get(user.get('id')).get(project)
+
+        for data in all_data:
             layer = data.get('layer')
             for key, value in layer.items():
                 if key == 'md5':

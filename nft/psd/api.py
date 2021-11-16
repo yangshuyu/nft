@@ -2,15 +2,18 @@
 from flask import request
 from webargs.flaskparser import use_args
 
+from libs.auth import jwt_required
 from libs.base.resource import BaseResource
 from nft.psd.model import Psd
-from nft.psd.schema import PsdMixtureSchema, PsdLayerSaveSchema
+from nft.psd.schema import PsdMixtureSchema, PsdLayerSaveSchema, PsdFilePostSchema
 
 
 class PsdResource(BaseResource):
-    def post(self):
-        file = request.files.get('file')
-        data = Psd.add_psd(file)
+    @jwt_required
+    @use_args(PsdFilePostSchema)
+    def post(self, args):
+        print(request.files)
+        data = Psd.add_psd(file=request.files.get('file'), project=args.get('project'))
         return data
 
 

@@ -1,12 +1,13 @@
 from flask import request
 from webargs.flaskparser import use_args
 
+from libs.auth import jwt_required
 from libs.base.resource import BaseResource
 from nft import ext
 from nft.layer.model import Layer, Image
 from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema, BatchDeleteImage, \
     BatchCombinationLayerSchema, LayerRemoveSchema, LayerMoveSchema, LayerPutSchema, LayerListQuerySchema, \
-    LayerQuerySchema
+    LayerQuerySchema, ImageDeleteSchema, ImageUpdateSchema, ImageDashboard
 
 
 class LayersResource(BaseResource):
@@ -48,6 +49,7 @@ class LayerMoveResource(BaseResource):
 class CombinationImagesResource(BaseResource):
     def post(self):
         args = request.json
+        args['user'] = self.current_user
         data = Image.add_image(**args)
         return data, 201
 
@@ -55,18 +57,27 @@ class CombinationImagesResource(BaseResource):
 class ImagesResource(BaseResource):
     @use_args(ImageQuerySchema)
     def post(self, args):
+        args['user'] = self.current_user
         data, total = Image.get_images_by_query(**args)
         return self.paginate(
             data, total, args.get('page', 1), args.get('per_page', 20))
 
 
 class ImageResource(BaseResource):
-    def delete(self, image_id):
-        Image.delete(image_id)
+    @jwt_required
+    @use_args(ImageDeleteSchema)
+    def delete(self, args, image_id):
+        args['image_id'] = image_id
+        args['user'] = self.current_user
+        Image.delete(**args)
         return {}, 204
 
-    def put(self, image_id):
-        args = request.json
+    @use_args(ImageUpdateSchema)
+    def put(self, args, image_id):
+        kwargs = request.json
+        kwargs['project'] = args.get('project')
+        kwargs['type'] = args.get('type')
+        kwargs['user'] = self.current_user
         data = Image.update(image_id, **args)
         return data
 
@@ -91,6 +102,9 @@ class ImageTaskProgressResource(BaseResource):
 
 
 class ImageLayerDashboard(BaseResource):
-    def get(self):
-        data = Image.get_image_layer_dashboard()
+    @jwt_required
+    @use_args(ImageDashboard)
+    def get(self, args):
+        args['user'] = self.current_user
+        data = Image.get_image_layer_dashboard(**args)
         return data

@@ -43,24 +43,16 @@ def extensions_load(app):
     # migrate.init_app(app, db)
     #
     CORS(app, resources={r"*": {"origins": "*", "expose_headers": "X-Total"}})
-    # init_dirs()
-    load_all_users()
-    load_all_projects()
+    init_dirs()
+
     load_project_data()
     load_user_data()
 
 
-def load_all_users():
-    file_path = load_config().FILE + '/file/users.json'
-    with open(file_path) as f:
-        ext.users = json.loads(f.read())
-
-
-def load_all_projects():
-    file_path = load_config().PROJECT_FILE
-    for _, b, file in os.walk('{}'.format(file_path)):
-        ext.projects = b
-        break
+# def load_all_users():
+#     file_path = load_config().FILE + '/file/users.json'
+#     with open(file_path) as f:
+#         ext.users = json.loads(f.read())
 
 
 def load_project_data():
@@ -90,10 +82,18 @@ def load_user_data():
     for user in ext.users:
         project_all_data = {}
         for project in user.get('projects', []):
-            file_path = '{}/{}/{}/{}'.format(
+            file_path = '{}/{}/users/{}/{}'.format(
                 load_config().PROJECT_FILE, project, user.get('id'), 'json')
-            map_file_path = '{}/{}/{}/{}'.format(
-                load_config().PROJECT_FILE, project, user.get('id'),'map_json')
+            map_file_path = '{}/{}/users/{}/{}'.format(
+                load_config().PROJECT_FILE, project, user.get('id'), 'map_json')
+
+            if not os.path.exists(file_path.replace('/json', '')):
+                os.mkdir(file_path.replace('/json', ''))
+                os.mkdir(file_path)
+
+            if not os.path.exists(file_path.replace('/map_json', '')):
+                os.mkdir(file_path.replace('/map_json', ''))
+                os.mkdir(map_file_path)
 
             data = []
             for _, _, file in os.walk('{}'.format(file_path)):
@@ -115,32 +115,59 @@ def load_user_data():
 
 
 def init_dirs():
-    file_path = load_config().FILE
+    file_path = load_config().PROJECT_FILE
+    for _, b, file in os.walk('{}'.format(file_path)):
+        ext.projects = b
+        break
 
-    try:
-        if not os.path.exists(file_path + '/file/images/'):
-            os.mkdir(file_path + '/file/images/')
+    if not os.path.exists(load_config().PROJECT_FILE + '/../users.json'):
+        map_json = [
+            {
+                "id": 1,
+                "username": "admin",
+                "password": "123456",
+                "role": 1,
+                "projects": [
+                ]
+            }
+        ]
+        with open(load_config().PROJECT_FILE + '/../users.json', 'a') as content:
+            content.write(json.dumps(map_json))
 
-        if not os.path.exists(file_path + '/file/mini_images/'):
-            os.mkdir(file_path + '/file/mini_images/')
+    file_path = load_config().FILE + '/file/users.json'
+    with open(file_path) as f:
+        ext.users = json.loads(f.read())
 
-        if not os.path.exists(file_path + '/file/json/'):
-            os.mkdir(file_path + '/file/json/')
+    for project in ext.projects:
+        file_path = '{}/{}/'.format(
+            load_config().PROJECT_FILE, project)
+        try:
+            if not os.path.exists(file_path + 'images/'):
+                os.mkdir(file_path + 'images/')
 
-        if not os.path.exists(file_path + '/file/map_json/'):
-            os.mkdir(file_path + '/file/map_json/')
+            if not os.path.exists(file_path + 'mini_images/'):
+                os.mkdir(file_path + 'mini_images/')
 
-        if not os.path.exists(file_path + '/file/psd/'):
-            os.mkdir(file_path + '/file/psd/')
+            if not os.path.exists(file_path + 'json/'):
+                os.mkdir(file_path + 'json/')
 
-        if not os.path.exists(file_path + '/file/psd_images/'):
-            os.mkdir(file_path + '/file/psd_images/')
+            if not os.path.exists(file_path + 'map_json/'):
+                os.mkdir(file_path + 'map_json/')
 
-        if not os.path.exists(file_path + '/file/layers/'):
-            os.mkdir(file_path + '/file/layers/')
+            if not os.path.exists(file_path + 'psd/'):
+                os.mkdir(file_path + 'psd/')
 
-        if not os.path.exists(file_path + '/file/layers/temp/'):
-            os.mkdir(file_path + '/file/layers/temp/')
+            if not os.path.exists(file_path + 'psd_images/'):
+                os.mkdir(file_path + 'psd_images/')
 
-    except Exception as e:
-        print(e)
+            if not os.path.exists(file_path + 'layers/'):
+                os.mkdir(file_path + 'layers/')
+
+            if not os.path.exists(file_path + 'users/'):
+                os.mkdir(file_path + 'users/')
+
+            if not os.path.exists(file_path + 'layers/temp/'):
+                os.mkdir(file_path + 'layers/temp/')
+
+        except Exception as e:
+            print(e)

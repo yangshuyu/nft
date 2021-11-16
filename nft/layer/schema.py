@@ -59,6 +59,24 @@ class ImageQuerySchema(BaseSchema):
     page = fields.Int(missing=1)
     per_page = fields.Int(missing=20)
     conditions = fields.Dict()
+    type = fields.Int()
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class ImageDeleteSchema(BaseSchema):
+    type = fields.Int(required=True)
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class ImageUpdateSchema(BaseSchema):
+    type = fields.Int(required=True)
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
@@ -66,6 +84,16 @@ class ImageQuerySchema(BaseSchema):
 
 class BatchDeleteImage(BaseSchema):
     image_ids = fields.List(fields.Str(), missing=[])
+    type = fields.Int(required=True)
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class ImageDashboard(BaseSchema):
+    type = fields.Int(required=True)
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True

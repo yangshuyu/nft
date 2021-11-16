@@ -20,13 +20,17 @@ from nft import ext
 class Psd():
 
     @classmethod
-    def add_psd(cls, file):
+    def add_psd(cls, **kwargs):
+        print(kwargs)
+        file = kwargs.get('file')
+        project = kwargs.get('project')
         if not file:
             dynamic_error({}, code=422, message='请上传file')
-        file_path = load_config().FILE
+
+        file_path = load_config().PROJECT_FILE + '/' + project
         psd_m = hashlib.md5(file.read()).hexdigest()
         file.seek(0)
-        pmd_file_path = file_path + '/file/psd/{}.psd'.format(psd_m)
+        pmd_file_path = file_path + '/psd/{}.psd'.format(psd_m)
         if not os.path.exists(pmd_file_path):
             file.save(pmd_file_path)
         psd = PSDImage.open(pmd_file_path)
@@ -42,16 +46,16 @@ class Psd():
         save_index = kwargs.get('save_index')
         layer = kwargs.get('layer')
         name = kwargs.get('name')
+        project = kwargs.get('project')
 
-        layer_path = load_config().LAYER_FILE
-        file_path = load_config().FILE
+        file_path = load_config().PROJECT_FILE
 
-        for _, _, file_list in os.walk('{}/{}'.format(layer_path, layer)):
+        for _, _, file_list in os.walk('/{}/{}/layer/{}'.format(file_path, project, layer)):
             for file in file_list:
                 if file == name + '.png':
                     dynamic_error({}, code=422, message='已存在该名称图层')
 
-        pmd_file_path = file_path + '/file/psd/{}.psd'.format(psd_m)
+        pmd_file_path = file_path + '/{}/psd/{}.psd'.format(project, psd_m)
         print(pmd_file_path)
         try:
             print('-----------------')
@@ -60,7 +64,7 @@ class Psd():
             for i in range(len(psd)):
                 if i not in save_index:
                     psd[i].visible = False
-            file_layer_path = '{}/file/psd_images/{}_{}.png'.format(file_path, layer, name)
+            file_layer_path = '{}/{}/psd_images/{}_{}.png'.format(file_path, project, layer, name)
             print(file_layer_path)
             psd.compose(True).save(file_layer_path)
 
@@ -69,8 +73,8 @@ class Psd():
 
         new_name = '{}_{}.png'.format(layer, name)
         return {
-            'url': '{}://{}/files/psd_images/{}?{}'.format(
-                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, new_name,
+            'url': '{}://{}/files/projects/{}/psd_images/{}?{}'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, new_name,
                 int(datetime.datetime.now().timestamp())
             ),
             'name': new_name
@@ -79,20 +83,21 @@ class Psd():
     @classmethod
     def add_image_to_layer(cls, **kwargs):
         name = kwargs.get('name')
+        project = kwargs.get('project')
         arry = name.split('_')
         layer, image_name = arry[0], '_'.join(arry[1:])
 
         layer_path = load_config().LAYER_FILE
-        file_path = load_config().FILE
+        file_path = load_config().PROJECT_FILE
 
         try:
-            old_file_path = '{}/file/psd_images/{}'.format(file_path, name)
-            new_file_path = '{}/{}/{}'.format(layer_path, layer, image_name)
+            old_file_path = '{}/{}/psd_images/{}'.format(file_path, project, name)
+            new_file_path = '{}/{}/layer/{}'.format(layer_path, project, image_name)
 
             shutil.move(old_file_path, new_file_path)
         except Exception as e:
             print(e)
             dynamic_error({}, code=422, message='移动文件失败' + str(e))
 
-        return {'url': '{}://{}/files/layers/{}/{}'.format(
-            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, layer, image_name)}
+        return {'url': '{}://{}/files/projects/{}/layer/{}'.format(
+            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, layer, image_name)}

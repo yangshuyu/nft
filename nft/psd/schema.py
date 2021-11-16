@@ -7,14 +7,6 @@ from config import load_config
 from libs.base.schema import BaseSchema, Timestamp
 
 
-def validate_layer(layer):
-    layer_path = load_config().LAYER_FILE
-    for dir, _, _ in os.walk('{}'.format(layer_path)):
-        if dir == '{}/{}'.format(layer_path, layer):
-            return layer
-    raise ValidationError("没有正确的图层，去定是否有该图层目录", tips="图层目录不正确，请核实")
-
-
 def validate_name(name):
     if name.endswith('png'):
         raise ValidationError("文件名称不正确", tips="文件名称不正确，请核实")
@@ -36,11 +28,19 @@ def validate_name(name):
     return name
 
 
+class PsdFilePostSchema(BaseSchema):
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
 class PsdMixtureSchema(BaseSchema):
     id = fields.Str(required=True)
     save_index = fields.List(fields.Int(), required=True)
-    layer = fields.Str(required=True, validate=validate_layer)
+    layer = fields.Str(required=True)
     name = fields.Str(required=True, validate=validate_name)
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
@@ -48,6 +48,7 @@ class PsdMixtureSchema(BaseSchema):
 
 class PsdLayerSaveSchema(BaseSchema):
     name = fields.Str(required=True)
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
