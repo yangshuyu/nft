@@ -172,7 +172,7 @@ class Image():
         image, map_json, err = cls.create_image(layer_images, image_id, user, project, t)
         if err:
             dynamic_error({}, code=422, message=err)
-        result = cls.generate_data(image, map_json, image_id, user, project)
+        result = cls.generate_data(image, map_json, image_id, user, project, t)
         return result
 
     @classmethod
@@ -309,7 +309,11 @@ class Image():
             with open('{}/map_json/{}.json'.format(save_path, str(image_id)), 'a') as content:
                 content.write(json.dumps(map_json))
                 temp_data['layer'] = map_json
-            ext.user_all_data[user.get('id')][project].append(temp_data)
+
+            if t == 1:
+                ext.user_all_data[user.get('id')][project].append(temp_data)
+            else:
+                ext.project_all_data[project].append(temp_data)
 
         except Exception as e:
             return None, None, '图片生成失败' + str(e)
@@ -317,13 +321,19 @@ class Image():
         return image, map_json, None
 
     @classmethod
-    def generate_data(cls, image, map_json, image_id, user, project):
+    def generate_data(cls, image, map_json, image_id, user, project, t):
 
         result = image.__dict__
         result['layer'] = map_json
         result['id'] = image_id
-        result['url'] = '{}://{}/files/projects/{}/users/{}/mini_images/{}.png'.format(
-            load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, user.get('id'), image_id)
+
+        if t == 1:
+            result['url'] = '{}://{}/files/projects/{}/users/{}/mini_images/{}.png'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, user.get('id'), image_id)
+        else:
+            result['url'] = '{}://{}/files/projects/{}/mini_images/{}.png'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, image_id)
+
         return result
 
     @classmethod
