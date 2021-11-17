@@ -158,6 +158,7 @@ class Image():
     def add_image(cls, **kwargs):
         project = kwargs.get('project')
         user = kwargs.get('user', {})
+        t = kwargs.get('type', 1)  # 默认是暂存
         if not project:
             dynamic_error({}, code=422, message='请选择项目')
 
@@ -165,10 +166,10 @@ class Image():
             dynamic_error({}, code=422, message='请选择项目')
 
         layer_images = cls.combination_layer(**kwargs)
-        image_id, err = cls.calibration_md5(layer_images, user, project)
+        image_id, err = cls.calibration_md5(layer_images, user, project, t)
         if err:
             dynamic_error({}, code=422, message=err)
-        image, map_json, err = cls.create_image(layer_images, image_id, user, project)
+        image, map_json, err = cls.create_image(layer_images, image_id, user, project, t)
         if err:
             dynamic_error({}, code=422, message=err)
         result = cls.generate_data(image, map_json, image_id, user, project)
@@ -232,21 +233,31 @@ class Image():
         return layer_images
 
     @classmethod
-    def calibration_md5(cls, layer_images, user, project):
+    def calibration_md5(cls, layer_images, user, project, t):
         m = hashlib.md5(str(sorted(layer_images)).encode('utf-8')).hexdigest()
-        for d in ext.user_all_data.get(user.get('id')).get(project):
-            if d['layer'].get('md5') == m:
-                return None, '图片重复'
+        if t == 1:
+            for d in ext.user_all_data.get(user.get('id')).get(project):
+                if d['layer'].get('md5') == m:
+                    return None, '图片重复'
+        else:
+            for d in ext.project_all_data.get(project):
+                if d['layer'].get('md5') == m:
+                    return None, '图片重复'
         return m, None
 
     @classmethod
-    def create_image(cls, layer_images, image_id, user, project):
+    def create_image(cls, layer_images, image_id, user, project, t):
         layer_path = '{}/{}/{}'.format(
             load_config().PROJECT_FILE, project, 'layers'
         )
-        save_path = '{}/{}/users/{}'.format(
-            load_config().PROJECT_FILE, project, user.get('id')
-        )
+        if t == 1:
+            save_path = '{}/{}/users/{}'.format(
+                load_config().PROJECT_FILE, project, user.get('id')
+            )
+        else:
+            save_path = '{}/{}'.format(
+                load_config().PROJECT_FILE, project
+            )
 
         width = ext.project_config.get(project, {}).get('width', 2000)
         height = ext.project_config.get(project, {}).get('high', 2000)
