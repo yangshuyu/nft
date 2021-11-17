@@ -309,7 +309,7 @@ class Image():
         result = image.__dict__
         result['layer'] = map_json
         result['id'] = image_id
-        result['url'] = '{}://{}/files/projects/{}/{}/mini_images/{}.png'.format(
+        result['url'] = '{}://{}/files/projects/{}/users/{}/mini_images/{}.png'.format(
             load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, user.get('id'), image_id)
         return result
 
