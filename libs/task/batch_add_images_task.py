@@ -31,11 +31,11 @@ def batch_add_images_task(**kwargs):
             ext.user_batch_data[user.get('id')].pop(project)
             break
         layer_images = Image.combination_layer(**image_data)
-        image_id, err = Image.calibration_md5(layer_images, user, project)
+        image_id, err = Image.calibration_md5(layer_images, user, project, t=1)
         if err:
             grand_err_total += 1
             continue
-        image, map_json, err = Image.create_image(layer_images, image_id, user, project)
+        image, map_json, err = Image.create_image(layer_images, image_id, user, project, t=1)
         if err:
             grand_err_total += 1
             continue
