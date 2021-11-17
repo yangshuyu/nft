@@ -495,6 +495,8 @@ class Image():
             try:
                 shutil.move(old_file_path + 'images/{}.png'.format(image_id),
                             new_file_path + 'images/{}.png'.format(image_id))
+                shutil.move(old_file_path + 'mini_images/{}.png'.format(image_id),
+                            new_file_path + 'mini_images/{}.png'.format(image_id))
                 shutil.move(old_file_path + 'json/{}.json'.format(image_id),
                             new_file_path + 'json/{}.json'.format(image_id))
                 shutil.move(old_file_path + 'map_json/{}.json'.format(image_id),
