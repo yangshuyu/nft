@@ -210,6 +210,8 @@ class Image():
         layer_images = []
         for layer in layers:
             d = kwargs.get(layer)
+            if not d:
+                continue
             percentage = d.get('percentage', 100)
             layer_data = d.get('data', [])
 
@@ -224,7 +226,7 @@ class Image():
                     ima = random.choice(correct_file_list)
                 ima = '{}/{}'.format(layer, ima)
 
-            per = random.randint(0, 100)
+            per = random.randint(0, 99)
             if per < percentage:
                 layer_images.append(ima)
         return layer_images
@@ -355,7 +357,7 @@ class Image():
                 d['url'] = '{}://{}/files/projects/{}/users/{}/mini_images/{}.png'.format(
                     load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN,
                     project, user.get('id'), d['layer']['md5'])
-                d['lossless_url'] = '{}://{}/files/projects/{}/users/{}images/{}.png'.format(
+                d['lossless_url'] = '{}://{}/files/projects/{}/users/{}/images/{}.png'.format(
                     load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN,
                     project, user.get('id'), d['layer']['md5'])
 
