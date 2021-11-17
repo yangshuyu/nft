@@ -346,10 +346,10 @@ class Image():
         for d in data:
             if t == 0:
                 d['id'] = d['layer']['md5']
-                d['url'] = '{}://{}/files/mini_images/{}.png'.format(
-                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
-                d['lossless_url'] = '{}://{}/files/images/{}.png'.format(
-                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, d['layer']['md5'])
+                d['url'] = '{}://{}/files/projects/{}/mini_images/{}.png'.format(
+                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, d['layer']['md5'])
+                d['lossless_url'] = '{}://{}/files/projects/{}/images/{}.png'.format(
+                    load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, d['layer']['md5'])
             else:
                 d['id'] = d['layer']['md5']
                 d['url'] = '{}://{}/files/projects/{}/users/{}/mini_images/{}.png'.format(
