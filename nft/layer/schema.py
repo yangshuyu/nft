@@ -50,6 +50,14 @@ class CombinationLayerSchema(BaseSchema):
 class BatchCombinationLayerSchema(BaseSchema):
     data = fields.Dict(required=True)
     nums = fields.Int(validate=lambda val: 10000 > val > 0, required=True)
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class TaskDashboardSchema(BaseSchema):
+    project = fields.Str(required=True)
 
     class Meta:
         strict = True
@@ -140,6 +148,14 @@ class LayerPutSchema(BaseSchema):
     name = fields.Str(required=True)
     new_name = fields.Str(required=True)
     project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class ImageTemporaryToPermanentSchema(BaseSchema):
+    project = fields.Str(required=True)
+    image_ids = fields.List(fields.Str(), missing=[])
 
     class Meta:
         strict = True

@@ -161,7 +161,7 @@ class Image():
         if not project:
             dynamic_error({}, code=422, message='请选择项目')
 
-        if project not in user.get('projects', []):
+        if user.get('role') != 1 and project not in user.get('projects', []):
             dynamic_error({}, code=422, message='请选择项目')
 
         layer_images = cls.combination_layer(**kwargs)
@@ -177,8 +177,14 @@ class Image():
     @classmethod
     def batch_add_images(cls, **kwargs):
         from libs.task.batch_add_images_task import batch_add_images_task
-        if ext.required_quantity > 0:
-            dynamic_error({}, code=422, message='有任务在执行')
+        user = kwargs.get('user')
+        project = kwargs.get('project')
+
+        user_data = ext.user_batch_data.get(user.get('id'))
+
+        if user_data:
+            if user_data.get(project) and user_data.get(project).get('required_quantity') > 0:
+                dynamic_error({}, code=422, message='该项目有任务在执行')
 
         ThreadPoolExecutor(2).submit(batch_add_images_task, **kwargs)
 
@@ -240,8 +246,8 @@ class Image():
             load_config().PROJECT_FILE, project, user.get('id')
         )
 
-        width = 2000
-        height = 2000
+        width = ext.project_config.get(project, {}).get('width', 2000)
+        height = ext.project_config.get(project, {}).get('high', 2000)
 
         to_image = pil_image.new('RGBA', (width, height), (0, 0, 0, 0))
 
@@ -466,3 +472,41 @@ class Image():
                 data[layer][k] = int(value / user_count * 100)
 
         return data
+
+    @classmethod
+    def temporary_to_permanent(cls, **kwargs):
+        user = kwargs.get('user')
+        project = kwargs.get('project')
+        image_ids = kwargs.get('image_ids')
+        file_path = load_config().PROJECT_FILE
+
+        for image_id in image_ids:
+
+            old_file_path = file_path + \
+                            '/{}/users/{}/'.format(project, user.get('id'))
+            new_file_path = file_path + '/{}/'.format(project)
+
+            if not os.path.exists(old_file_path + 'json/{}.json'.format(image_id)):
+                continue
+
+            if os.path.exists(new_file_path + 'map_json/{}.json'.format(image_id)):
+                continue
+
+            try:
+                shutil.move(old_file_path + 'images/{}.png'.format(image_id),
+                            new_file_path + 'images/{}.png'.format(image_id))
+                shutil.move(old_file_path + 'json/{}.json'.format(image_id),
+                            new_file_path + 'json/{}.json'.format(image_id))
+                shutil.move(old_file_path + 'map_json/{}.json'.format(image_id),
+                            new_file_path + 'map_json/{}.json'.format(image_id))
+
+                data = ext.user_all_data.get(user.get('id')).get(project)
+
+                for index, item in enumerate(data):
+                    if item.get('layer', {}).get('md5') == image_id:
+                        ext.user_all_data.get(user.get('id')).get(project).remove(item)
+                        ext.project_all_data.get(project).append(item)
+                        break
+
+            except Exception as e:
+                print(e)

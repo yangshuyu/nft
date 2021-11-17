@@ -47,6 +47,7 @@ def extensions_load(app):
 
     load_project_data()
     load_user_data()
+    init_project_config()
 
 
 # def load_all_users():
@@ -81,7 +82,8 @@ def load_project_data():
 def load_user_data():
     for user in ext.users:
         project_all_data = {}
-        for project in user.get('projects', []):
+        projects = user.get('projects', []) if user.get('role') == 0 else ext.project_all_data
+        for project in projects:
             file_path = '{}/{}/users/{}/{}'.format(
                 load_config().PROJECT_FILE, project, user.get('id'), 'json')
             map_file_path = '{}/{}/users/{}/{}'.format(
@@ -171,3 +173,17 @@ def init_dirs():
 
         except Exception as e:
             print(e)
+
+
+def init_project_config():
+    if not os.path.exists(load_config().PROJECT_FILE + '/../project_config.json'):
+        map_json = {
+            "monkey": {"width": 2000, "high": 2000},
+        }
+
+        with open(load_config().PROJECT_FILE + '/../project_config.json', 'a') as content:
+            content.write(json.dumps(map_json))
+
+    file_path = load_config().FILE + '/file/project_config.json'
+    with open(file_path) as f:
+        ext.project_config = json.loads(f.read())

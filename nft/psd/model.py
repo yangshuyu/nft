@@ -87,12 +87,11 @@ class Psd():
         arry = name.split('_')
         layer, image_name = arry[0], '_'.join(arry[1:])
 
-        layer_path = load_config().LAYER_FILE
         file_path = load_config().PROJECT_FILE
 
         try:
             old_file_path = '{}/{}/psd_images/{}'.format(file_path, project, name)
-            new_file_path = '{}/{}/layer/{}'.format(layer_path, project, image_name)
+            new_file_path = '{}/{}/layers/{}/{}'.format(file_path, project, layer, image_name)
 
             shutil.move(old_file_path, new_file_path)
         except Exception as e:

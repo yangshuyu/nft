@@ -10,7 +10,7 @@ loglevel = "info"
 accesslog = "-"
 access_log_format = "%(h)s %(l)s %(u)s %(t)s %(r)s %(s)s %(b)s %(D)s %(f)s %(a)s"
 errorlog = "-"
-bind = '127.0.0.1:5002'
+bind = '127.0.0.1:8080'
 
 workers = multiprocessing.cpu_count() * 2 + 1
 worker_class = "gunicorn.workers.ggevent.GeventWorker"

@@ -4,11 +4,14 @@ from flask_migrate import Migrate
 db = SQLAlchemy(session_options={"autoflush": False, "autocommit": False})
 migrate = Migrate(compare_type=True)
 project_all_data = {}
+project_config = {}
 user_all_data = {}
-required_quantity = -1
-completed_quantity = 0
+# required_quantity = -1
+# completed_quantity = 0
 users = []
 projects = []
+
+user_batch_data = {}
 
 # project_all_data
 # {'a': [], 'monkey': [{'name': 'name #1', 'attributes': [{'trait_type': 'Background', 'value': 'Aquamarine'},

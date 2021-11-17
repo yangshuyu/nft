@@ -7,7 +7,8 @@ from nft import ext
 from nft.layer.model import Layer, Image
 from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema, BatchDeleteImage, \
     BatchCombinationLayerSchema, LayerRemoveSchema, LayerMoveSchema, LayerPutSchema, LayerListQuerySchema, \
-    LayerQuerySchema, ImageDeleteSchema, ImageUpdateSchema, ImageDashboard
+    LayerQuerySchema, ImageDeleteSchema, ImageUpdateSchema, ImageDashboard, ImageTemporaryToPermanentSchema, \
+    TaskDashboardSchema
 
 
 class LayersResource(BaseResource):
@@ -72,33 +73,50 @@ class ImageResource(BaseResource):
         Image.delete(**args)
         return {}, 204
 
+    @jwt_required
     @use_args(ImageUpdateSchema)
     def put(self, args, image_id):
         kwargs = request.json
         kwargs['project'] = args.get('project')
         kwargs['type'] = args.get('type')
         kwargs['user'] = self.current_user
-        data = Image.update(image_id, **args)
+        data = Image.update(image_id, **kwargs)
         return data
 
 
 class BatchDeleteImagesResource(BaseResource):
+    @jwt_required
     @use_args(BatchDeleteImage)
     def post(self, args):
+        args['user'] = self.current_user
         Image.batch_delete(**args)
         return {}
 
 
 class BatchCombinationImagesResource(BaseResource):
+    @jwt_required
     @use_args(BatchCombinationLayerSchema)
     def post(self, args):
+        args['user'] = self.current_user
         Image.batch_add_images(**args)
         return {}, 201
 
 
 class ImageTaskProgressResource(BaseResource):
-    def get(self):
-        return {'total': ext.required_quantity, 'completed': ext.completed_quantity}
+    @use_args(TaskDashboardSchema)
+    def get(self, args):
+        project = args.get('project')
+        user = self.current_user
+        user_data = ext.user_batch_data.get(user.get('id'))
+        if not user_data:
+            return {'total': -1, 'completed': 0}
+
+        project_data = ext.user_batch_data[user.get('id')].get(project)
+        if not project_data:
+            return {'total': -1, 'completed': 0}
+
+        return {'total': ext.user_batch_data[user.get('id')][project].get('required_quantity'),
+                'completed': ext.user_batch_data[user.get('id')][project].get('completed_quantity')}
 
 
 class ImageLayerDashboard(BaseResource):
@@ -108,3 +126,12 @@ class ImageLayerDashboard(BaseResource):
         args['user'] = self.current_user
         data = Image.get_image_layer_dashboard(**args)
         return data
+
+
+class ImageTemporaryToPermanentResource(BaseResource):
+    @jwt_required
+    @use_args(ImageTemporaryToPermanentSchema)
+    def post(self, args):
+        args['user'] = self.current_user
+        Image.temporary_to_permanent(**args)
+        return {}
