@@ -136,7 +136,7 @@ def init_dirs():
         with open(load_config().PROJECT_FILE + '/../users.json', 'a') as content:
             content.write(json.dumps(map_json))
 
-    file_path = load_config().FILE + '/file/users.json'
+    file_path = load_config().PROJECT_FILE + '/../users.json'
     with open(file_path) as f:
         ext.users = json.loads(f.read())
 
@@ -184,6 +184,6 @@ def init_project_config():
         with open(load_config().PROJECT_FILE + '/../project_config.json', 'a') as content:
             content.write(json.dumps(map_json))
 
-    file_path = load_config().FILE + '/file/project_config.json'
+    file_path = load_config().PROJECT_FILE + '/../project_config.json'
     with open(file_path) as f:
         ext.project_config = json.loads(f.read())
