@@ -22,7 +22,7 @@ class OAuth(object):
         payload = {
             "iss": "ec",
             "iat": datetime.datetime.now().timestamp(),
-            "exp": (datetime.datetime.now() + datetime.timedelta(days=100)).timestamp(),
+            "exp": (datetime.datetime.now() + datetime.timedelta(days=2)).timestamp(),
             "aud": "nft",
             "sub": "Delivery center management system",
             "username": user.get('username'),

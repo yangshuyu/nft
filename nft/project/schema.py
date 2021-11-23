@@ -28,3 +28,21 @@ class UserPutSchema(BaseSchema):
 
     class Meta:
         strict = True
+
+
+class ProjectPostSchema(BaseSchema):
+    name = fields.Str(required=True)
+    width = fields.Int(required=True, missing=2000)
+    high = fields.Int(required=True, missing=2000)
+
+    class Meta:
+        strict = True
+
+
+class ProjectPutSchema(BaseSchema):
+    name = fields.Str(required=True)
+    width = fields.Int(required=True, missing=2000)
+    high = fields.Int(required=True, missing=2000)
+
+    class Meta:
+        strict = True

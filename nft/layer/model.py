@@ -1,3 +1,4 @@
+import base64
 import copy
 import datetime
 import hashlib
@@ -13,6 +14,8 @@ from config import load_config
 from libs.error import dynamic_error
 from nft import ext
 from concurrent.futures import ThreadPoolExecutor
+
+from nft.app import load_project_data, load_user_data, init_project_config, init_dirs
 
 
 class Layer():
@@ -144,6 +147,63 @@ class Layer():
 
         return {'url': '{}://{}/files/projects/layers/{}/{}'.format(
             load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, layer, new_name)}
+
+    @classmethod
+    def add_layer_dir(cls, **kwargs):
+        project = kwargs.get('project')
+        dir = kwargs.get('dir')
+
+        layer_path = '{}/{}/{}'.format(
+            load_config().PROJECT_FILE, project, 'layers'
+        )
+
+        if os.path.exists('{}/{}'.format(layer_path, dir)):
+            dynamic_error({}, code=422, message='已存在该项目目录')
+
+        else:
+            os.mkdir('{}/{}'.format(layer_path, dir))
+
+        # init_dirs()
+        # load_project_data()
+        # load_user_data()
+        # init_project_config()
+
+    @classmethod
+    def validate_name(cls, name):
+        def _get_str(s, left, right):
+            return s.split(left)[1].split(right)[0]
+
+        try:
+            result = {
+                'name': _get_str(name, "-", ":"),
+                'weight': int(_get_str(name, ":", "{")),
+            }
+            traits_str = _get_str(name, "{", "}").split("&")
+            result['traits'] = list(map(
+                lambda x: (_get_str(x, "<", ">"), x.split(">")[1]), traits_str
+            ))
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            dynamic_error({}, code=422, message='文件名称不正确' + name)
+
+    @classmethod
+    def add_layer_dir_images(cls, **kwargs):
+        project = kwargs.get('project')
+        dir = kwargs.get('dir')
+        images = kwargs.get('images')
+        for image in images:
+            print(image.get('name'))
+            cls.validate_name(image.get('name'))
+
+        for image in images:
+            data = image.get('thumbUrl').split(',')
+            data = ','.join(data[1:])
+            img_data = base64.b64decode(data)
+            # 注意：如果是"data:image/jpg:base64,"，那你保存的就要以png格式，如果是"data:image/png:base64,"那你保存的时候就以jpg格式。
+            file_path = '{}/{}/layers/{}'.format(load_config().PROJECT_FILE, project, dir)
+            with open('{}/{}'.format(file_path, image.get('name')), 'wb') as f:
+                f.write(img_data)
 
 
 class Image():
@@ -421,7 +481,7 @@ class Image():
                         project, user.get('id'), image_id))
                     # os.unlink(file_path)
 
-                if os.path.exists(file_path + '/{}/users/{}/min_image/{}.png'.format(
+                if os.path.exists(file_path + '/{}/users/{}/mini_image/{}.png'.format(
                         project, user.get('id'), image_id)):
                     os.remove(file_path + '/{}/users/{}/mini_image/{}.png'.format(
                         project, user.get('id'), image_id))
@@ -535,3 +595,37 @@ class Image():
 
             except Exception as e:
                 print(e)
+
+    @classmethod
+    def batch_delete_images_by_conditions(cls, **kwargs):
+        conditions = kwargs.get('conditions')
+        project = kwargs.get('project')
+        user = kwargs.get('user')
+        t = kwargs.get('type')
+
+        if t == 0:
+            result = copy.deepcopy(ext.project_all_data.get(project))
+            if conditions:
+                for data in ext.project_all_data.get(project):
+                    for key, value in conditions.items():
+                        if data['layer'].get(key) not in value:
+                            result.remove(data)
+                            break
+        else:
+            result = copy.deepcopy(ext.user_all_data.get(user.get('id')).get(project))
+            if conditions:
+                for data in ext.user_all_data.get(user.get('id')).get(project):
+                    for key, value in conditions.items():
+                        if data['layer'].get(key) not in value:
+                            result.remove(data)
+                            break
+
+        result = sorted(result, key=lambda item: item.get('timestamp', 0), reverse=True)
+
+        for r in result:
+            kwargs['image_id'] = r['layer']['md5']
+            cls.delete(**kwargs)
+
+        load_project_data()
+        load_user_data()
+        init_project_config()

@@ -6,7 +6,6 @@ import re
 from flask import Flask
 from flask_cors import CORS
 
-from nft import BLUEPRINTS
 from config import load_config
 from nft.ext import db, migrate
 
@@ -14,6 +13,8 @@ from nft import ext
 
 
 def create_app(app_name="api", blueprints=None):
+    from nft import BLUEPRINTS
+
     app = Flask(app_name)
     config = load_config()
     app.config.from_object(config)

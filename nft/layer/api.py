@@ -1,14 +1,14 @@
 from flask import request
 from webargs.flaskparser import use_args
 
-from libs.auth import jwt_required
+from libs.auth import jwt_required, requires
 from libs.base.resource import BaseResource
 from nft import ext
 from nft.layer.model import Layer, Image
 from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema, BatchDeleteImage, \
     BatchCombinationLayerSchema, LayerRemoveSchema, LayerMoveSchema, LayerPutSchema, LayerListQuerySchema, \
     LayerQuerySchema, ImageDeleteSchema, ImageUpdateSchema, ImageDashboard, ImageTemporaryToPermanentSchema, \
-    TaskDashboardSchema
+    TaskDashboardSchema, BatchConditionsDeleteSchema, LayerDirPostSchema, LayerDirImagesPostSchema
 
 
 class LayersResource(BaseResource):
@@ -134,4 +134,28 @@ class ImageTemporaryToPermanentResource(BaseResource):
     def post(self, args):
         args['user'] = self.current_user
         Image.temporary_to_permanent(**args)
+        return {}
+
+
+class BatchConditionsDeleteImages(BaseResource):
+    @use_args(BatchConditionsDeleteSchema)
+    def post(self, args):
+        args['user'] = self.current_user
+        Image.batch_delete_images_by_conditions(**args)
+        return {}
+
+
+class AdminLayerDirResource(BaseResource):
+    @requires(1)
+    @use_args(LayerDirPostSchema)
+    def post(self, args):
+        Layer.add_layer_dir(**args)
+        return {}
+
+
+class AdminLayerDirsImagesResource(BaseResource):
+    @requires(1)
+    @use_args(LayerDirImagesPostSchema)
+    def post(self, args):
+        Layer.add_layer_dir_images(**args)
         return {}

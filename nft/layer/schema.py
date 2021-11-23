@@ -160,3 +160,36 @@ class ImageTemporaryToPermanentSchema(BaseSchema):
     class Meta:
         strict = True
 
+
+class BatchConditionsDeleteSchema(BaseSchema):
+    conditions = fields.Dict()
+    type = fields.Int(missing=0)
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class LayerDirImageSchema(BaseSchema):
+    thumbUrl = fields.Str()
+    name = fields.Str()
+
+    class Meta:
+        strict = True
+
+
+class LayerDirPostSchema(BaseSchema):
+    dir = fields.Str(required=True)
+    project = fields.Str(required=True)
+
+    class Meta:
+        strict = True
+
+
+class LayerDirImagesPostSchema(BaseSchema):
+    dir = fields.Str(required=True)
+    project = fields.Str(required=True)
+    images = fields.List(fields.Nested(LayerDirImageSchema), required=True)
+
+    class Meta:
+        strict = True
