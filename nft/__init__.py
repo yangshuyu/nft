@@ -8,7 +8,8 @@ from nft.api import CustomApi
 from nft.layer.api import LayersResource, ImagesResource, CombinationImagesResource, ImageResource, \
     BatchDeleteImagesResource, BatchCombinationImagesResource, ImageTaskProgressResource, ImageLayerDashboard, \
     LayerRemoveResource, LayerMoveResource, LayerResource, LayersListResource, ImageTemporaryToPermanentResource, \
-    BatchConditionsDeleteImages, AdminLayerDirResource, AdminLayerDirsImagesResource
+    BatchConditionsDeleteImages, AdminLayerDirResource, AdminLayerDirsImagesResource, \
+    ConditionsImageTemporaryToPermanentResource
 from nft.project.api import ProjectsResource, AdminProjectsResource
 from nft.psd.api import PsdResource, PsdMixtureResource, PsdLayerResource
 
@@ -34,6 +35,7 @@ api_v1.add_resource(BatchCombinationImagesResource, '/batch//combination/images'
 api_v1.add_resource(ImageTaskProgressResource, '/image/task/progress')
 api_v1.add_resource(ImageLayerDashboard, '/image/layer/dashboard')
 api_v1.add_resource(ImageTemporaryToPermanentResource, '/image/temporary_to_permanent')
+api_v1.add_resource(ConditionsImageTemporaryToPermanentResource, '/conditions/image/temporary_to_permanent')
 api_v1.add_resource(BatchConditionsDeleteImages, '/conditions/batch_delete_images')
 
 

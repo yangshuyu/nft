@@ -557,6 +557,40 @@ class Image():
         return data
 
     @classmethod
+    def batch_delete_images_by_conditions(cls, **kwargs):
+        conditions = kwargs.get('conditions')
+        project = kwargs.get('project')
+        user = kwargs.get('user')
+        t = kwargs.get('type')
+
+        if t == 0:
+            result = copy.deepcopy(ext.project_all_data.get(project))
+            if conditions:
+                for data in ext.project_all_data.get(project):
+                    for key, value in conditions.items():
+                        if data['layer'].get(key) not in value:
+                            result.remove(data)
+                            break
+        else:
+            result = copy.deepcopy(ext.user_all_data.get(user.get('id')).get(project))
+            if conditions:
+                for data in ext.user_all_data.get(user.get('id')).get(project):
+                    for key, value in conditions.items():
+                        if data['layer'].get(key) not in value:
+                            result.remove(data)
+                            break
+
+        result = sorted(result, key=lambda item: item.get('timestamp', 0), reverse=True)
+
+        for r in result:
+            kwargs['image_id'] = r['layer']['md5']
+            cls.delete(**kwargs)
+
+        load_project_data()
+        load_user_data()
+        init_project_config()
+
+    @classmethod
     def temporary_to_permanent(cls, **kwargs):
         user = kwargs.get('user')
         project = kwargs.get('project')
@@ -597,34 +631,24 @@ class Image():
                 print(e)
 
     @classmethod
-    def batch_delete_images_by_conditions(cls, **kwargs):
+    def temporary_to_permanent_by_conditions(cls, **kwargs):
         conditions = kwargs.get('conditions')
         project = kwargs.get('project')
         user = kwargs.get('user')
-        t = kwargs.get('type')
 
-        if t == 0:
-            result = copy.deepcopy(ext.project_all_data.get(project))
-            if conditions:
-                for data in ext.project_all_data.get(project):
-                    for key, value in conditions.items():
-                        if data['layer'].get(key) not in value:
-                            result.remove(data)
-                            break
-        else:
-            result = copy.deepcopy(ext.user_all_data.get(user.get('id')).get(project))
-            if conditions:
-                for data in ext.user_all_data.get(user.get('id')).get(project):
-                    for key, value in conditions.items():
-                        if data['layer'].get(key) not in value:
-                            result.remove(data)
-                            break
-
-        result = sorted(result, key=lambda item: item.get('timestamp', 0), reverse=True)
+        result = copy.deepcopy(ext.user_all_data.get(user.get('id')).get(project))
+        if conditions:
+            for data in ext.user_all_data.get(user.get('id')).get(project):
+                for key, value in conditions.items():
+                    if data['layer'].get(key) not in value:
+                        result.remove(data)
+                        break
+        image_ids = []
 
         for r in result:
-            kwargs['image_id'] = r['layer']['md5']
-            cls.delete(**kwargs)
+            image_ids.append(r['layer']['md5'])
+        kwargs['image_ids'] = image_ids
+        cls.temporary_to_permanent(**kwargs)
 
         load_project_data()
         load_user_data()

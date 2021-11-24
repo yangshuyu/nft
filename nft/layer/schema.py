@@ -161,6 +161,14 @@ class ImageTemporaryToPermanentSchema(BaseSchema):
         strict = True
 
 
+class ConditionsImageTemporaryToPermanentSchema(BaseSchema):
+    project = fields.Str(required=True)
+    conditions = fields.Dict()
+
+    class Meta:
+        strict = True
+
+
 class BatchConditionsDeleteSchema(BaseSchema):
     conditions = fields.Dict()
     type = fields.Int(missing=0)

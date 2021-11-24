@@ -8,7 +8,8 @@ from nft.layer.model import Layer, Image
 from nft.layer.schema import CombinationLayerSchema, ImageQuerySchema, ImageSchema, BatchDeleteImage, \
     BatchCombinationLayerSchema, LayerRemoveSchema, LayerMoveSchema, LayerPutSchema, LayerListQuerySchema, \
     LayerQuerySchema, ImageDeleteSchema, ImageUpdateSchema, ImageDashboard, ImageTemporaryToPermanentSchema, \
-    TaskDashboardSchema, BatchConditionsDeleteSchema, LayerDirPostSchema, LayerDirImagesPostSchema
+    TaskDashboardSchema, BatchConditionsDeleteSchema, LayerDirPostSchema, LayerDirImagesPostSchema, \
+    ConditionsImageTemporaryToPermanentSchema
 
 
 class LayersResource(BaseResource):
@@ -134,6 +135,15 @@ class ImageTemporaryToPermanentResource(BaseResource):
     def post(self, args):
         args['user'] = self.current_user
         Image.temporary_to_permanent(**args)
+        return {}
+
+
+class ConditionsImageTemporaryToPermanentResource(BaseResource):
+    @jwt_required
+    @use_args(ConditionsImageTemporaryToPermanentSchema)
+    def post(self, args):
+        args['user'] = self.current_user
+        Image.temporary_to_permanent_by_conditions(**args)
         return {}
 
 
