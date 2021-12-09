@@ -21,7 +21,7 @@ from nft.app import load_project_data, load_user_data, init_project_config, init
 class Layer():
 
     @classmethod
-    def decompose_layers(cls, file, path):
+    def decompose_layers(cls, file, path, project):
         def _get_str(s, left, right):
             return s.split(left)[1].split(right)[0]
 
@@ -30,8 +30,8 @@ class Layer():
             'weight': int(_get_str(file, ":", "{")),
             'fullpath': path + "/" + file,
             'file': file,
-            'url': '{}://{}/files/layers/{}/{}'.format(
-                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, path, file)
+            'url': '{}://{}/files/projects/{}/layers/{}/{}'.format(
+                load_config().SERVER_SCHEME, load_config().SERVER_DOMAIN, project, path, file)
         }
         traits_str = _get_str(file, "{", "}").split("&")
         result['traits'] = list(map(
@@ -53,7 +53,7 @@ class Layer():
                 for _, _, file in os.walk('{}/{}'.format(layer_path, dir_name)):
                     for f in file:
                         if not f.startswith('.'):
-                            result[dir_name].append(cls.decompose_layers(f, dir_name))
+                            result[dir_name].append(cls.decompose_layers(f, dir_name, project))
         return result
 
     @classmethod
@@ -75,7 +75,7 @@ class Layer():
                             if q:
                                 if q not in f and q not in r:
                                     continue
-                            d = cls.decompose_layers(f, dir_name)
+                            d = cls.decompose_layers(f, dir_name, project)
                             d['layer'] = dir_name
                             data.append(d)
 
@@ -339,7 +339,7 @@ class Image():
                 to_image = pil_image.alpha_composite(to_image, from_imge)
 
                 file = layer_images[i].split('/')[1]
-                traits = Layer.decompose_layers(file, layer_path).get('traits')
+                traits = Layer.decompose_layers(file, layer_path, project).get('traits')
                 image.attributes.append({'trait_type': traits[0][0], 'value': traits[0][1]})
                 temp_map = layer_images[i].split('/')
                 map_json[temp_map[0]] = layer_images[i]
